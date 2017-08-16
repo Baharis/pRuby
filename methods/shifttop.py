@@ -35,7 +35,7 @@ def liu(r1_sam, t_sam, t_ref, tempcorr_method, **_):
 def mao(r1_sam, t_sam, t_ref, tempcorr_method, **_):
     """	Input:	'r1_sam' peak pos. in nm & 't_sam' ruby temp. in K (ufloats)
         Return:	calculated pressure in GPa                         (ufloat)
-        Descr.: Calculate pressure based on doi:10.1063/1.321957"""
+        Descr.: Calculate pressure based on doi:10.1029/JB091iB05p04673"""
     pa = 1.01325e-4                    # atmospheric pressure in GPa
     r1 = r1_sam + tempcorr_method(**{'peak_number': 'r1',
                              't_sam': t_sam, 't_ref': t_ref})

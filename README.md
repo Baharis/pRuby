@@ -1,89 +1,84 @@
 # pRuby
-Pressure calculation based on Ruby fluorescence spectrum.
-
-
-
-
-# Kesshou
-Simple file modification and visualisation toolkit for crystallography.
-Available for Python 3.5+.
-
-* module **hikari**: modification and visualisation of .hkl files
-* module **pruby**: pressure calculation based on Ruby Pressure Scale spectrum
-
-Available under the MIT License.
+Pressure calculation based on Ruby fluorescence spectrum. Available for 
+Python 3.5+ under the MIT License. 
 
 ### Dependencies
-* [docopt](http://docopt.org/)
-* [matplotlib, numpy](http://www.scipy.org)
-* [PeakUtils](http://pythonhosted.org/PeakUtils)
-* [pyqtgraph](http://www.pyqtgraph.org/)
+* [matplotlib](http://www.matplotlib.org/)
+* [numpy, scipy](http://www.scipy.org)
+    * [tkinter](http://www.tkdocs.com/index.html)
 * [uncertainties](http://pythonhosted.org/uncertainties/)
 
-### Installation and usage
+### Installation
 
-It is recommended to use Kesshou inside a Python virtual environment
-([virtualenvwrapper](http://virtualenvwrapper.readthedocs.io))
+It is recommended to instal and run pRuby inside a Python virtual environment
+(like [virtualenvwrapper](http://virtualenvwrapper.readthedocs.io) or
+[virtualenvwrapper-win](https://github.com/davidmarble/virtualenvwrapper-win)) 
 to avoid version conflicts of its dependencies with system installed packages.
 In order to create virtual environment run in the command line:
 
-    $ mkvirtualenv -p /usr/bin/python3.5 kesshou
+    $ mkvirtualenv -p /path/to/python3.5+ pRuby   
 
-And then install dependencies:
+Download or clone the repository on your local disc and install dependencies using:
 
     $ pip install -r requirements.txt
 
-In order to run the scripts, download or clone the repository on your local disc 
-and enter the virtual environment with:
+In order to run program, enter the virtual environment and run pRuby with:
 
-    $ workon kesshou
+    $ workon pRuby
+    $ python3 /path/to/program/pRuby.py
 
 
-### Examples
+### Usage
 
-For a simple .hkl file example.hkl located in test_data:
-
-```
-   1   0   0  10000.   1000.   1
-   1   0   0   5000.    500.   2
-   0   1   0   2500.    250.   3
-  -1   0   0   1250.    125.   4
-   0  -1   0   -625.    62.5   5
-   0   0   1   312.5   31.25   6
-   0   0   0      1.      1.   1
-```
-
-Running a command:
- 
-    python3 hikari.py draw2d --scale=2 test_data/example.hkl
-    
-Results in a visualisation of a default (hk0) plane:
-
-![example.png](test_data/example1.png?raw=true)
-
-Resulting image can be
-easily modified using appropriate commands, for example:
-
-    python3 hikari.py draw2d --plane="('h', 0, 'l')" --reduce=1 --scale=2 test_data/example.hkl
-
-will visualise reflections' redundancy on (h0l) cross-section:
-
-![example.png](test_data/example2.png?raw=true)
-
-Reflection file may be easily modified as well. Executing
-
-    python3 hikari.py modify -o "(2, 2, 2, 6, 6, 2)" test_data/example.hkl
-
-Will reformat the .hkl format to the shorted form:
-
-```
- 1 0 010000.1000.0 1
- 1 0 05000.0 500.0 2
- 0 1 02500.0 250.0 3
--1 0 01250.0 125.0 4
- 0-1 0-625.0  62.5 5
- 0 0 1 312.5 31.25 6
- 0 0 0   0.0   0.0 1
-```
-
-In order to see all available options execute `hikari.py --help`.
+pRuby provides a simple, minimalistic GUI with the following functionality:
+* **Data** - import, draw and handle reference for ruby fluorescence data. 
+    * **Import** - Import ruby fluorescence data from .txt file, fit the peaks
+    according to selected peakhunt method and recalculate R1 and p values.
+    * **Draw** - Draw imported data file as well as fitted curve and found peak 
+    position. Multiple plots may be drawn on the same canvas. 
+    * **To reference** - Export provided R1, t and p1 data as a new reference.
+    * **From reference** - Import R1, r and p1 data from previously saved reference.
+    * **Drow on import** - Togle this option on in order to automatically draw
+    imported data on the active canvas.
+* **Methods** - switch between active peak hunting, 
+pressure calculation and temperature collection methods.
+Default settings are: Labspec peak fitting / Vos temperature correction
+/ Liu pressure calculation. All presented methods rely solely on R1 position.
+    * **Camel fit** - original fit utilising three independent Gaussian functions
+    for modelling R1 and R2 (and random noise around/between them) simultaneously.
+    Intended for bad quaility data with heavily overlapping peaks,
+    unfit for the other procedures. 
+    * **Gauss fit** - basic fit using a Gaussian function to independently model
+    R1 and R2 position based on a small amount of data around them.
+    Safe bet in majority of cases.
+    * **Labspec fit** - semi-original method inspired by Labspec approach, 
+    independently models R1 and R2 positions using larger amount of data than 
+    Gauss fit as a linear combination of Gauss and Cauchy functions.
+    Intended for handling sharp, good quality signals.
+    * **Ragan (1992)** - temperature correction method according to equation
+    put forward by Ragan et al. in doi:10.1063/1.351951.
+    This method is for relative pressure calculation 
+    and therefore requires a reference.
+    * **Vos (1991)** - temperature correction method according to the R1
+    equation put forward by Vos et al. in doi:10.1063/1.348903.
+    This method is for absolute pressure calculation 
+    and therefore does not use a reference.
+    * **No t correction**
+    * **Piermarini (1970)** - pressure calculation method according to equation
+    put forward by Piermarini et al. in 10.1063/1.321957.
+    This method is for relative pressure calculation 
+    and therefore requires a reference.
+    * **Mao (1986)** - pressure calculation method according to equation
+    put forward by Mao et al. in doi:10.1029/JB091iB05p04673. This method 
+    This method is for absolute pressure calculation 
+    and therefore does not use a reference.
+    * **Wei (2011)** - pressure calculation method according to equation
+    put forward by Wei et al. in doi:10.1063/1.3624618. 
+    This method is for absolute pressure calculation 
+    and therefore does not use a reference.
+    It has built-in temperature dependency and 
+    ignores other temperature correction procedures.
+    * **Liu (2013)** - pressure calculation method according to equation
+    put forward by Liu et al. in doi:10.1088/1674-1056/22/5/056201.
+    This method is for absolute pressure calculation 
+    and therefore does not use a reference.
