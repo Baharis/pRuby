@@ -137,12 +137,7 @@ class Application(tk.Frame):
     def about():
         message = 'pRuby - pressure estimation based on ruby fluorescence ' \
                   'spectrum by Daniel Tcho\u0144\n\n'\
-                  'Pressure estimation:\n' \
-                  '> Piermarini et al. (1970), doi:10.1063/1.321957\n' \
-                  '> Wei et al. (2011), doi:10.1063/1.3624618\n' \
-                  'Temperature correction:\n' \
-                  '> Ragan et al. (1992), doi:10.1063/1.351951\n\n' \
-                  'See pRuby page for additional details' \
+                  'For details and help, visit pRuby page' \
                   '(https://github.com/Baharis/pRuby).'
         tkmb.showinfo(title='About pRuby', message=message)
 
