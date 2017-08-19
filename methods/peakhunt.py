@@ -92,7 +92,7 @@ def peak_search(dots):
     """	Input:	dots - ruby spectrum data (n x 2 ndarray)
         Return:	list of data biggest peaks (n x 2 ndarray)
         Descr.: Find and sort biggest peaks in dots data"""
-    peak_indexes = find_peaks_cwt(vector=dots[:, 1], widths=[3])
+    peak_indexes = find_peaks_cwt(vector=dots[:, 1], widths=[10])
     peaks = np.array([dots[index, :] for index in peak_indexes])
     peaks = peaks[peaks[:, 1].argsort()[::-1]]
     return peaks

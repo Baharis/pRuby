@@ -18,6 +18,7 @@ class Application(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
+        os.chdir(os.path.expanduser('~'))
 
         # SETTING CONSTANTS
         self.r1_ref = uc.ufloat(694.2, 0.1)
@@ -28,9 +29,10 @@ class Application(tk.Frame):
         self.p1_sam = self.p1_ref
         self.dots = None
         self.data_draw_on_import = tk.BooleanVar(value=False)
-        self.filename = ''
+        self.filenext = ''
+        self.fileprevious = ''
         self.fit_color_cycle = cycle_generator(('r', 'g', 'b', 'c', 'm', 'y'))
-        self.path = os.path.expanduser('~')
+        self.fit_successful = True
         self.peakhunt_results = {}
         self.peakhunt_method = peakhunt.default()
         self.shifttop_method = shifttop.default()
@@ -97,16 +99,18 @@ class Application(tk.Frame):
             value='liu', command=self.methods_set)
         self.menu.add_command(label='?', command=self.about)
 
-        # # ENTRY AREA - file
-        # self.filename_stringvar = tk.StringVar(value=self.filename)
-        # self.file_previous = tk.Button(self, text='\u25c0') #command=
-        # self.file_previous.grid(row=0, column=0)
-        # self.file_entry = tk.Entry(self, textvariable=self.filename_stringvar,
-        #                            width=12, justify='left')
-        # self.file_entry.grid(row=0, column=1, columnspan=2, padx=1, pady=1)
-        # self.file_entry.bind('<Return>', self.calculate_p1)
-        # self.file_next = tk.Button(self, text='\u25b6')  # command=
-        # self.file_next.grid(row=0, column=3)
+        # ENTRY AREA - file
+        self.filename_stringvar = tk.StringVar(value='')
+        self.file_previous_button = tk.Button(self, text='\u25c0',
+            command=self.file_toprevious)
+        self.file_previous_button.grid(row=0, column=0)
+        self.file_entry = tk.Entry(self, textvariable=self.filename_stringvar,
+                                   width=12, justify='left')
+        self.file_entry.grid(row=0, column=1, columnspan=2, padx=1, pady=1)
+        self.file_entry.bind('<Return>', self.calculate_p1)
+        self.file_next_button = tk.Button(self, text='\u25b6',
+            command=self.file_tonext)
+        self.file_next_button.grid(row=0, column=3)
 
         # ENTRY AREA - r1
         self.r1_ufloatvar = tkob.UfloatVar(value=self.r1_ref)
@@ -174,27 +178,30 @@ class Application(tk.Frame):
 
         # DRAW ELEMENTS OF LAST PEAKHUNT AND FIT:
         # DOTS
-        pp.plot(dots_x, dots_y, marker='.', color=active_color, linestyle='None'
-                , label=self.filename+', '+self.method_peakhunt_stringvar.get())
+        label = self.filename_stringvar.get() + ', ' + \
+                self.method_peakhunt_stringvar.get()
+        pp.plot(dots_x, dots_y, marker='.', color=active_color,
+                linestyle='None', label=label)
 
-        # PEAK POSITIONS
-        pp.plot(self.peakhunt_results['r1_val'],
-                self.peakhunt_results['r1_int'],
-                color=active_color, marker='v', markersize='8')
-        pp.plot(self.peakhunt_results['r2_val'],
-                self.peakhunt_results['r2_int'],
-                color=active_color, marker='v', markersize='8')
+        if self.fit_successful:
+            # PEAK POSITIONS
+            pp.plot(self.peakhunt_results['r1_val'],
+                    self.peakhunt_results['r1_int'],
+                    color=active_color, marker='v', markersize='8')
+            pp.plot(self.peakhunt_results['r2_val'],
+                    self.peakhunt_results['r2_int'],
+                    color=active_color, marker='v', markersize='8')
 
-        # CURVES AND FILLS
-        for fit_function, fit_range in \
-                zip(self.peakhunt_results['fit_function'],
-                    self.peakhunt_results['fit_range']):
-            curve_x = np.linspace(start=fit_range[0], stop=fit_range[1],
-                                  num=int(100 * (fit_range[1] - fit_range[0])))
-            pp.plot(curve_x, fit_function(curve_x), linestyle='-',
-                    color=active_color)
-            pp.fill_between(x=curve_x, y1=y_min, y2=fit_function(curve_x),
-                            color=active_color, alpha=0.1)
+            # CURVES AND FILLS
+            for fit_function, fit_range in \
+                    zip(self.peakhunt_results['fit_function'],
+                        self.peakhunt_results['fit_range']):
+                curve_x = np.linspace(start=fit_range[0], stop=fit_range[1],
+                                      num=int(100 * (fit_range[1] - fit_range[0])))
+                pp.plot(curve_x, fit_function(curve_x), linestyle='-',
+                        color=active_color)
+                pp.fill_between(x=curve_x, y1=y_min, y2=fit_function(curve_x),
+                                color=active_color, alpha=0.1)
 
         # X-AXIS AND LEGEND
         ax = pp.gca()
@@ -206,28 +213,38 @@ class Application(tk.Frame):
         pp.show()
 
     def data_fit(self):
-        self.peakhunt_results = self.peakhunt_method(self.dots)
-        self.r1_sam = uc.ufloat(self.peakhunt_results['r1_val'],
-                                self.peakhunt_results['r1_unc'])
-        self.r1_ufloatvar.set(value=self.r1_sam)
+        try:
+            self.peakhunt_results = self.peakhunt_method(self.dots)
+        except RuntimeError:
+            tkmb.showerror(message='Data could not be fitted! '
+                                   'Consider changing the peakhunt method.')
+            self.fit_successful = False
+        else:
+            self.fit_successful = True
+            self.r1_sam = uc.ufloat(self.peakhunt_results['r1_val'],
+                                    self.peakhunt_results['r1_unc'])
+            self.r1_ufloatvar.set(value=self.r1_sam)
 
     def data_import(self):
         path = tkfd.askopenfilename(
             title='Open ruby file...',
             filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
-            initialdir=self.path)
+            initialdir=os.getcwd())
         if len(path) > 0:
             try:
                 dots = np.loadtxt(path, dtype=(float, float))
             except PermissionError:
                 tkmb.showerror(message='No permissions to read this file')
                 return
-            except ValueError or TypeError:
+            except (ValueError, TypeError):
                 tkmb.showerror(message='Cannot interpret file content')
                 return
         else:
             return
-        self.path, self.filename = os.path.split(path)
+        directory, filename = os.path.split(path)
+        self.filename_stringvar.set(filename)
+        os.chdir(directory)
+        self.file_list()
         self.dots = dots[dots[:, 0].argsort()]
         self.data_fit()
         self.calculate_p1()
@@ -248,6 +265,49 @@ class Application(tk.Frame):
         self.p1_ufloatvar.set(self.p1_sam)
         self.calculate_p1()
 
+    def file_change(self, filename):
+        if filename == '':
+            return
+        try:
+            dots = np.loadtxt(os.path.join(os.getcwd(), filename),
+                       dtype=(float, float))
+        except (PermissionError, ValueError, TypeError):
+            self.filename_stringvar.set(filename)
+            return
+        self.dots = dots[dots[:, 0].argsort()]
+        self.filename_stringvar.set(filename)
+        self.file_list()
+        self.data_fit()
+        self.calculate_p1()
+        if self.data_draw_on_import.get() is True:
+            self.data_draw()
+
+    def file_fromentry(self):
+        filename = self.file_entry.get()
+        self.file_change(filename)
+
+    def file_list(self):
+        filelist = []
+        for filename in os.listdir(os.getcwd()):
+                filelist.append(filename)
+        filelist.sort()
+        try:
+            self.filenext = filelist[(filelist.index(
+                self.filename_stringvar.get()) + 1 ) % len(filelist)]
+        except IndexError:
+            self.filenext = ''
+        try:
+            self.fileprevious = filelist[filelist.index(
+                self.filename_stringvar.get()) - 1]
+        except IndexError:
+            self.fileprevious = ''
+
+    def file_tonext(self):
+        self.file_change(self.filenext)
+
+    def file_toprevious(self):
+        self.file_change(self.fileprevious)
+
     def methods_set(self):
         self.peakhunt_method = \
             self.peakhunt_methods[self.method_peakhunt_stringvar.get()]
@@ -263,10 +323,11 @@ class Application(tk.Frame):
 # MAIN PROGRAM
 if __name__ == '__main__':
     root = tk.Tk()
+    app_wd = os.getcwd()
     Application(root).pack(side='top', fill='both', expand=True)
     root.title('pRuby')
     root.attributes("-topmost", True)
-    icon = tk.PhotoImage(file=os.getcwd() + '/resources/icon.gif')
+    icon = tk.PhotoImage(file=app_wd + '/resources/icon.gif')
     root.tk.call('wm', 'iconphoto', root._w, icon)
     root.resizable(False, False)
     root.mainloop()
