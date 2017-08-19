@@ -11,6 +11,7 @@ from methods import peakhunt
 from methods import shifttop
 from methods import tempcorr
 from utility.cycle_generator import cycle_generator
+import utility.tk_objects as tkob
 
 
 class Application(tk.Frame):
@@ -96,32 +97,40 @@ class Application(tk.Frame):
             value='liu', command=self.methods_set)
         self.menu.add_command(label='?', command=self.about)
 
+        # # ENTRY AREA - file
+        # self.filename_stringvar = tk.StringVar(value=self.filename)
+        # self.file_previous = tk.Button(self, text='\u25c0') #command=
+        # self.file_previous.grid(row=0, column=0)
+        # self.file_entry = tk.Entry(self, textvariable=self.filename_stringvar,
+        #                            width=12, justify='left')
+        # self.file_entry.grid(row=0, column=1, columnspan=2, padx=1, pady=1)
+        # self.file_entry.bind('<Return>', self.calculate_p1)
+        # self.file_next = tk.Button(self, text='\u25b6')  # command=
+        # self.file_next.grid(row=0, column=3)
+
         # ENTRY AREA - r1
-        self.r1_stringvar = tk.StringVar(value='{0:.2uS}'.format(self.r1_ref))
-        tk.Label(self, text='R1').grid(row=0, column=0, padx=1, pady=1)
-        self.r1_entry = tk.Entry(self, textvariable=self.r1_stringvar,
-                                 width=12, justify='right')
-        self.r1_entry.bind('<Return>', self.calculate_p1)
-        self.r1_entry.grid(row=0, column=1, columnspan=2, padx=1, pady=1)
-        tk.Label(self, text='nm').grid(row=0, column=3, padx=1, pady=1)
+        self.r1_ufloatvar = tkob.UfloatVar(value=self.r1_ref)
+        tk.Label(self, text='R1').grid(row=1, column=0)
+        self.r1_entry = tkob.Entry(self, textvariable=self.r1_ufloatvar,
+                                   command=self.calculate_p1)
+        self.r1_entry.grid(row=1, column=1, columnspan=2)
+        tkob.Label(self, text='nm').grid(row=1, column=3)
 
         # ENTRY AREA - t
-        self.t_stringvar = tk.StringVar(value='{0:.2uS}'.format(self.t_ref))
-        tk.Label(self, text='t').grid(row=1, column=0, padx=1, pady=1)
-        self.t_entry = tk.Entry(self, textvariable=self.t_stringvar,
-                                width=12, justify='right')
-        self.t_entry.bind('<Return>', self.calculate_p1)
-        self.t_entry.grid(row=1, column=1, columnspan=2, padx=1, pady=1)
-        tk.Label(self, text='\u00B0C').grid(row=1, column=3, padx=1, pady=1)
+        self.t_ufloatvar = tkob.UfloatVar(value=self.t_ref)
+        tk.Label(self, text='t').grid(row=2, column=0)
+        self.t_entry = tkob.Entry(self, textvariable=self.t_ufloatvar,
+                                command=self.calculate_p1)
+        self.t_entry.grid(row=2, column=1, columnspan=2)
+        tk.Label(self, text='\u00B0C').grid(row=2, column=3)
 
         # ENTRY AREA - p1
-        self.p1_stringvar = tk.StringVar(value='{0:.2uS}'.format(self.p1_ref))
-        tk.Label(self, text='p1').grid(row=2, column=0, padx=1, pady=1)
-        self.p1_entry = tk.Entry(self, textvariable=self.p1_stringvar,
-                            width=12, justify='right')
-        self.t_entry.bind('<Return>', self.calculate_p1)
-        self.p1_entry.grid(row=2, column=1, columnspan=2, padx=1, pady=1)
-        tk.Label(self, text='GPa').grid(row=2, column=3, padx=1, pady=1)
+        self.p1_ufloatvar = tkob.UfloatVar(value=self.p1_ref)
+        tk.Label(self, text='p1').grid(row=3, column=0)
+        self.p1_entry = tkob.Entry(self, textvariable=self.p1_ufloatvar,
+                                 command=self.calculate_p1)
+        self.p1_entry.grid(row=3, column=1, columnspan=2)
+        tk.Label(self, text='GPa').grid(row=3, column=3)
 
     def calculate_p1(self, *_):
         self.r1_sam = uc.ufloat_fromstr(self.r1_entry.get())
@@ -131,7 +140,7 @@ class Application(tk.Frame):
                               'r1_sam': self.r1_sam, 't_sam': self.t_sam,
                               'r1_ref': self.r1_ref, 't_ref': self.t_ref}
         self.p1_sam = self.shifttop_method(**peakhunt_arguments)
-        self.p1_stringvar.set(value='{0:.2uS}'.format(self.p1_sam))
+        self.p1_ufloatvar.set(value=self.p1_sam)
 
     @staticmethod
     def about():
@@ -200,7 +209,7 @@ class Application(tk.Frame):
         self.peakhunt_results = self.peakhunt_method(self.dots)
         self.r1_sam = uc.ufloat(self.peakhunt_results['r1_val'],
                                 self.peakhunt_results['r1_unc'])
-        self.r1_stringvar.set(value='{0:.2uS}'.format(self.r1_sam))
+        self.r1_ufloatvar.set(value=self.r1_sam)
 
     def data_import(self):
         path = tkfd.askopenfilename(
@@ -226,17 +235,17 @@ class Application(tk.Frame):
             self.data_draw()
 
     def data_to_reference(self):
-        self.r1_ref = uc.ufloat_fromstr(self.r1_stringvar.get())
-        self.t_ref = uc.ufloat_fromstr(self.t_stringvar.get())
-        self.p1_ref = uc.ufloat_fromstr(self.p1_stringvar.get())
+        self.r1_ref = uc.ufloat_fromstr(self.r1_ufloatvar.get())
+        self.t_ref = uc.ufloat_fromstr(self.t_ufloatvar.get())
+        self.p1_ref = uc.ufloat_fromstr(self.p1_ufloatvar.get())
 
     def data_from_reference(self):
         self.r1_sam = self.r1_ref
-        self.r1_stringvar.set('{0:.2uS}'.format(self.r1_sam))
+        self.r1_ufloatvar.set(self.r1_sam)
         self.t_sam = self.t_ref
-        self.t_stringvar.set('{0:.2uS}'.format(self.t_sam))
+        self.t_ufloatvar.set(self.t_sam)
         self.p1_sam = self.p1_ref
-        self.p1_stringvar.set('{0:.2uS}'.format(self.p1_sam))
+        self.p1_ufloatvar.set(self.p1_sam)
         self.calculate_p1()
 
     def methods_set(self):

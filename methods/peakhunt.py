@@ -122,8 +122,8 @@ def camel_fit(dots):
     guess = (a1, mu1, si1, a2, mu2, si2, a12, mu12, si12)
 
     # CUT DATA TO FITTED SURROUNDING
-    x_beg = peaks[1, 0] - 2 * peakhunt_fit_width
-    x_end = peaks[0, 0] + 2 * peakhunt_fit_width
+    x_beg = peaks[1, 0] - 1.5 * peakhunt_fit_width
+    x_end = peaks[0, 0] + 1.5 * peakhunt_fit_width
     indices_to_delete = \
         [index for index, x in enumerate(dots[:, 0]) if x < x_beg or x > x_end]
     dots = np.delete(dots, indices_to_delete, axis=0)

@@ -53,6 +53,7 @@ def piermarini(r1_sam, t_sam, r1_ref, t_ref, tempcorr_method, **_):
                              't_sam': t_sam, 't_ref': t_ref})
     s1 *= 10                           # shift in A
     a = uc.ufloat(2.740, 0.016)        # kbar/A
+    print(s1)
     return pa + 0.1 * (a * s1)
 
 
