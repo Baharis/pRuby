@@ -107,7 +107,7 @@ class Application(tk.Frame):
         self.file_entry = tk.Entry(self, textvariable=self.filename_stringvar,
                                    width=12, justify='left')
         self.file_entry.grid(row=0, column=1, columnspan=2, padx=1, pady=1)
-        self.file_entry.bind('<Return>', self.calculate_p1)
+        self.file_entry.bind('<Return>', self.file_fromentry)
         self.file_next_button = tk.Button(self, text='\u25b6',
             command=self.file_tonext)
         self.file_next_button.grid(row=0, column=3)
@@ -282,23 +282,25 @@ class Application(tk.Frame):
         if self.data_draw_on_import.get() is True:
             self.data_draw()
 
-    def file_fromentry(self):
+    def file_fromentry(self, *_):
         filename = self.file_entry.get()
-        self.file_change(filename)
+        if os.path.isfile(os.path.join(os.getcwd(), filename)):
+            self.file_change(filename)
+        elif os.path.isfile(filename):
+            self.file_change(filename)
 
     def file_list(self):
         filelist = []
         for filename in os.listdir(os.getcwd()):
                 filelist.append(filename)
         filelist.sort()
+        fileindex = filelist.index(self.filename_stringvar.get())
         try:
-            self.filenext = filelist[(filelist.index(
-                self.filename_stringvar.get()) + 1 ) % len(filelist)]
+            self.filenext = filelist[(fileindex + 1) % len(filelist)]
         except IndexError:
             self.filenext = ''
         try:
-            self.fileprevious = filelist[filelist.index(
-                self.filename_stringvar.get()) - 1]
+            self.fileprevious = filelist[fileindex - 1]
         except IndexError:
             self.fileprevious = ''
 
