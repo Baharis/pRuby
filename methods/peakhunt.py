@@ -12,9 +12,9 @@ def default():
 
 
 def methods():
-    return {'camel_fit': camel_fit,
-            'gauss_fit': gauss_fit,
-            'labspec_fit': labspec_fit}
+    return {'camel_fit':   {'function': camel_fit,   'name': 'Camel Fit'},
+            'gauss_fit':   {'function': gauss_fit,   'name': 'Gauss Fit'},
+            'labspec_fit': {'function': labspec_fit, 'name': 'Labspec Fit'}}
 
 
 # BASIC FUNCTIONS

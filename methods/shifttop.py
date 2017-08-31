@@ -7,10 +7,10 @@ def default():
 
 
 def methods():
-    return {'liu':        liu,
-            'mao':        mao,
-            'piermarini': piermarini,
-            'wei':        wei}
+    return {'liu':        {'function': liu,        'name': 'Liu (2013)'},
+            'mao':        {'function': mao,        'name': 'Mao (1986)'},
+            'piermarini': {'function': piermarini, 'name': 'Piermarini (1970)'},
+            'wei':        {'function': wei,        'name': 'Wei (2011)'}}
 
 
 def mao_like(r1, a, b):
@@ -53,7 +53,6 @@ def piermarini(r1_sam, t_sam, r1_ref, t_ref, tempcorr_method, **_):
                              't_sam': t_sam, 't_ref': t_ref})
     s1 *= 10                           # shift in A
     a = uc.ufloat(2.740, 0.016)        # kbar/A
-    print(s1)
     return pa + 0.1 * (a * s1)
 
 

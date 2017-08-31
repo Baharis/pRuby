@@ -65,38 +65,20 @@ class Application(tk.Frame):
                                        variable=self.data_draw_on_import)
         self.menu_methods = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Methods", menu=self.menu_methods)
-        self.menu_methods.add_radiobutton(
-            label='Camel Fit', variable=self.method_peakhunt_stringvar,
-            value='camel_fit', command=self.methods_set)
-        self.menu_methods.add_radiobutton(
-            label='Gauss Fit', variable=self.method_peakhunt_stringvar,
-            value='gauss_fit', command=self.methods_set)
-        self.menu_methods.add_radiobutton(
-            label='Labspec Fit', variable=self.method_peakhunt_stringvar,
-            value='labspec_fit', command=self.methods_set)
+        for key, m in self.peakhunt_methods.items():
+            self.menu_methods.add_radiobutton(
+                label=m['name'], variable=self.method_peakhunt_stringvar,
+                value=m['function'].__name__, command=self.methods_set)
         self.menu_methods.add_separator()
-        self.menu_methods.add_radiobutton(
-            label='Ragan (1992)', variable=self.method_tempcorr_stringvar,
-            value='ragan', command=self.methods_set)
-        self.menu_methods.add_radiobutton(
-            label='Vos (1991)', variable=self.method_tempcorr_stringvar,
-            value='vos', command=self.methods_set)
-        self.menu_methods.add_radiobutton(
-            label='No t correction', variable=self.method_tempcorr_stringvar,
-            value='none', command=self.methods_set)
+        for key, m in self.tempcorr_methods.items():
+            self.menu_methods.add_radiobutton(
+                label=m['name'], variable=self.method_tempcorr_stringvar,
+                value=m['function'].__name__, command=self.methods_set)
         self.menu_methods.add_separator()
-        self.menu_methods.add_radiobutton(
-            label='Piermarini (1970)', variable=self.method_shifttop_stringvar,
-            value='piermarini', command=self.methods_set)
-        self.menu_methods.add_radiobutton(
-            label='Mao (1986)', variable=self.method_shifttop_stringvar,
-            value='mao', command=self.methods_set)
-        self.menu_methods.add_radiobutton(
-            label='Wei (2011)', variable=self.method_shifttop_stringvar,
-            value='wei', command=self.methods_set)
-        self.menu_methods.add_radiobutton(
-            label='Liu (2013)', variable=self.method_shifttop_stringvar,
-            value='liu', command=self.methods_set)
+        for key, m in self.shifttop_methods.items():
+            self.menu_methods.add_radiobutton(
+                label=m['name'], variable=self.method_shifttop_stringvar,
+                value=m['function'].__name__, command=self.methods_set)
         self.menu.add_command(label='?', command=self.about)
 
         # ENTRY AREA - file
@@ -312,11 +294,11 @@ class Application(tk.Frame):
 
     def methods_set(self):
         self.peakhunt_method = \
-            self.peakhunt_methods[self.method_peakhunt_stringvar.get()]
+         self.peakhunt_methods[self.method_peakhunt_stringvar.get()]['function']
         self.shifttop_method = \
-            self.shifttop_methods[self.method_shifttop_stringvar.get()]
+         self.shifttop_methods[self.method_shifttop_stringvar.get()]['function']
         self.tempcorr_method =\
-            self.tempcorr_methods[self.method_tempcorr_stringvar.get()]
+         self.tempcorr_methods[self.method_tempcorr_stringvar.get()]['function']
         if self.dots is not None:
             self.data_fit()
         self.calculate_p1()
