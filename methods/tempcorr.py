@@ -62,7 +62,7 @@ def vos(peak_number, t_sam, **_):
                 t_sam in C degrees               (ufloat)
         Return:	ruby peak wavenumber shift in nm (ufloat)
         Descr.: Calculate r1 or (r1+r2)/2, for r2, shift in given temperature,
-                based on doi:10.1063/1.348903"""
+                based on equations (1) and (2) in doi:10.1063/1.348903"""
     dt = t_sam - 26.85
     if peak_number == 'r1':
         shift_in_a = 6.591e-2 * dt + 7.624e-5 * dt ** 2 - 1.733e-7 * dt ** 3

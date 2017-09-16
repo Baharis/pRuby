@@ -40,6 +40,27 @@ def camel_fixed(a1, mu1, si1, a2, mu2, si2, a12, mu12, si12):
     return camel_baby
 
 
+def llama(x, a1, mu1, si1, a2, mu2, si2):
+    """	Input:  x - given point for which camel is calculated
+                a0, b0 - linear equation coefitients
+                a2, mu2, si2 - r2 gaussian coeffitients
+                a1, mu1, si1 - r1 gaussian coeffitients (float)s
+        Return:	value of gaussian with desired parameters in x (float)
+        Descr.: Calculate the value described above	"""
+    return gauss(x, a2, mu2, si2) + gauss(x, a1, mu1, si1)
+
+
+def llama_fixed(a1, mu1, si1, a2, mu2, si2):
+    """	Input:  a0, b0 - linear equation coefitients
+                a2, mu2, si2 - r2 gaussian coeffitients
+                a1, mu1, si1 - r1 gaussian coeffitients (float)s
+        Return:	camel function of an 'x' parameter      (float)
+        Descr.: Produce camel(x) function with fixed gaussians' parameters"""
+    def llama_baby(x):
+        return llama(x, a1, mu1, si1, a2, mu2, si2)
+    return llama_baby
+
+
 def gauss(x, a, mu, si):
     """	Input: x - value and a, mu, si - gaussian coeffitients  (float)
         Return:	value of gaussian with desired parameters and x (float)
@@ -147,6 +168,53 @@ def camel_fit(dots):
             'r2_unc': sigma[4],
             'r2_int': camel(r2_val, *popt),
             'fit_function': [camel_fixed(*popt)],
+            'fit_range': [(x_beg, x_end)]}
+
+
+def llama_fit(dots):
+    """	Input:	dots - ruby spectrum data (n x 2 ndarray)
+        Return:	{'r1' position (ufloat) and 'fit'ted function (function)}
+        Descr.: Fit camel function to dots"""
+
+    # ESTIMATE INITIAL a0 AND b0
+    peaks = peak_search(dots)[:2, :]
+    x_beg, x_end = dots[0, 0], dots[-1, 0]
+    y_beg, y_end = dots[0, 1], dots[-1, 1]
+    a0 = (y_end - y_beg) / (x_end - x_beg)
+    b0 = ((y_beg + y_end) - a0 * (x_beg + x_end)) / 2.0
+
+    # ESTIMATE INITIAL GAUSSIAN PARAMETERS
+    si1, si2 = 0.35, 0.35
+    mu1 = peaks[0, 0]
+    a1 = peaks[0, 1] - a0 * mu1 - b0
+    mu2 = peaks[1, 0]
+    a2 = peaks[1, 1] - a0 * mu2 - b0
+    guess = (a1, mu1, si1, a2, mu2, si2)
+
+    # CUT DATA TO FITTED SURROUNDING
+    x_beg = peaks[1, 0] - 1.5 * peakhunt_fit_width
+    x_end = peaks[0, 0] + 1.5 * peakhunt_fit_width
+    indices_to_delete = \
+        [index for index, x in enumerate(dots[:, 0]) if x < x_beg or x > x_end]
+    dots = np.delete(dots, indices_to_delete, axis=0)
+
+    # FIT THE CAMEL CURVE
+    popt, pcov = curve_fit(llama, xdata=dots[:, 0], ydata=dots[:, 1], p0=guess,
+                           sigma=mu1 * np.power(dots[:, 1], -1))
+    sigma = np.sqrt(np.diag(pcov))
+
+    # FIND ACTUAL MAXIMA AND RETURN DATA
+    dx = peakhunt_fit_width
+    r1_val = popt[1]
+    r2_val = popt[4]
+
+    return {'r1_val': r1_val,
+            'r1_unc': sigma[1],
+            'r1_int': llama(r1_val, *popt),
+            'r2_val': r2_val,
+            'r2_unc': sigma[4],
+            'r2_int': llama(r2_val, *popt),
+            'fit_function': [llama_fixed(*popt)],
             'fit_range': [(x_beg, x_end)]}
 
 

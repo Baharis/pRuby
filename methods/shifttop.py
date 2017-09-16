@@ -9,7 +9,7 @@ def default():
 def methods():
     return {'liu':        {'function': liu,        'name': 'Liu (2013)'},
             'mao':        {'function': mao,        'name': 'Mao (1986)'},
-            'piermarini': {'function': piermarini, 'name': 'Piermarini (1970)'},
+            'piermarini': {'function': piermarini, 'name': 'Piermarini (1975)'},
             'wei':        {'function': wei,        'name': 'Wei (2011)'}}
 
 
@@ -29,7 +29,7 @@ def liu(r1_sam, t_sam, t_ref, tempcorr_method, **_):
     pa = 1.01325e-4                    # atmospheric pressure in GPa
     r1 = r1_sam + tempcorr_method(**{'peak_number': 'r1',
                              't_sam': t_sam, 't_ref': t_ref})
-    return mao_like(r1, a=1904, b=9.827)
+    return pa + mao_like(r1, a=1904, b=9.827)
 
 
 def mao(r1_sam, t_sam, t_ref, tempcorr_method, **_):

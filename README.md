@@ -66,7 +66,7 @@ Default settings are: Labspec peak fitting / Vos temperature correction
     This method is for absolute pressure calculation 
     and therefore does not use a reference.
     * **No t correction** - no temperature correction will be applied to data.
-    * **Piermarini (1970)** - pressure calculation method according to equation
+    * **Piermarini (1975)** - pressure calculation method according to equation
     put forward by Piermarini et al. in 
     [10.1063/1.321957](http://aip.scitation.org/doi/10.1063/1.321957).
     This method is for relative pressure calculation 
