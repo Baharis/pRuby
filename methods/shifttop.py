@@ -26,7 +26,7 @@ def liu(r1_sam, t_sam, t_ref, tempcorr_method, **_):
     """	Input:	'r1_sam' peak pos. in nm & 't_sam' ruby temp. in K (ufloats)
         Return:	calculated pressure in GPa                         (ufloat)
         Descr.: Calculate pressure based on doi:10.1088/1674-1056/22/5/056201"""
-    pa = 1.01325e-4                    # atmospheric pressure in GPa
+    pa = 0                    # atmospheric pressure in GPa
     r1 = r1_sam + tempcorr_method(**{'peak_number': 'r1',
                              't_sam': t_sam, 't_ref': t_ref})
     return pa + mao_like(r1, a=1904, b=9.827)
@@ -36,7 +36,7 @@ def mao(r1_sam, t_sam, t_ref, tempcorr_method, **_):
     """	Input:	'r1_sam' peak pos. in nm & 't_sam' ruby temp. in K (ufloats)
         Return:	calculated pressure in GPa                         (ufloat)
         Descr.: Calculate pressure based on doi:10.1029/JB091iB05p04673"""
-    pa = 1.01325e-4                    # atmospheric pressure in GPa
+    pa = 0                    # atmospheric pressure in GPa
     r1 = r1_sam + tempcorr_method(**{'peak_number': 'r1',
                              't_sam': t_sam, 't_ref': t_ref})
     return mao_like(r1, a=1904, b=7.665)
@@ -47,7 +47,7 @@ def piermarini(r1_sam, t_sam, r1_ref, t_ref, tempcorr_method, **_):
                 't_sam' & 't_ref' ruby temperatures (ufloat)
         Return:	calculated pressure               (ufloat)
         Descr.: Calculate pressure based on doi:10.1063/1.321957"""
-    pa = 1.01325e-4                    # atmospheric pressure in GPa
+    pa = 0                             # atmospheric pressure in GPa
     s1 = r1_sam - r1_ref               # shift in nm
     s1 += tempcorr_method(**{'peak_number': 'r1',
                              't_sam': t_sam, 't_ref': t_ref})
