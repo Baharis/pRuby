@@ -239,11 +239,18 @@ class Application(tk.Frame):
             title='Open ruby file...',
             filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
             initialdir=os.getcwd())
+        self.file_change(path)
+
+    def file_change(self, path):
         if len(path) > 0:
             try:
                 dots = self._parse_txt(path)
             except ValueError:
-                dots = self._parse_other(path)
+                try:
+                    dots = self._parse_other(path)
+                except ValueError:
+                    tkmb.showerror(message='Cannot interpret file content')
+                    return
             except PermissionError:
                 tkmb.showerror(message='No permissions to read this file')
                 return
@@ -254,13 +261,17 @@ class Application(tk.Frame):
             return
         directory, filename = os.path.split(path)
         self.filename_stringvar.set(filename)
-        os.chdir(directory)
+        try:
+            os.chdir(directory)
+        except FileNotFoundError:
+            pass
         self.file_list()
         self.dots = self.cut_dots_to_690_700(dots=dots)
         self.data_fit()
         self.calculate_p1()
         if self.data_autodraw.get() is True:
             self.data_draw()
+        print(self.data_autodraw.get())
 
     def data_to_reference(self):
         self.r1_ref = uc.ufloat_fromstr(self.r1_ufloatvar.get())
@@ -276,23 +287,6 @@ class Application(tk.Frame):
         self.p1_ufloatvar.set(self.p1_sam)
         self.calculate_p1()
 
-    def file_change(self, filename):
-        if filename == '':
-            return
-        try:
-            dots = np.loadtxt(os.path.join(os.getcwd(), filename),
-                       dtype=(float, float))
-        except (PermissionError, ValueError, TypeError):
-            self.filename_stringvar.set(filename)
-            return
-        self.dots = dots[dots[:, 0].argsort()]
-        self.filename_stringvar.set(filename)
-        self.file_list()
-        self.data_fit()
-        self.calculate_p1()
-        if self.data_autodraw.get() is True:
-            self.data_draw()
-
     def file_fromentry(self, *_):
         filename = self.file_entry.get()
         if os.path.isfile(os.path.join(os.getcwd(), filename)):
@@ -303,6 +297,7 @@ class Application(tk.Frame):
     def file_list(self):
         filelist = []
         for filename in os.listdir(os.getcwd()):
+            if not os.path.isdir(filename):
                 filelist.append(filename)
         filelist.sort()
         fileindex = filelist.index(self.filename_stringvar.get())
@@ -314,6 +309,9 @@ class Application(tk.Frame):
             self.fileprevious = filelist[fileindex - 1]
         except IndexError:
             self.fileprevious = ''
+        print(filelist)
+        print(self.filenext)
+        print(self.fileprevious)
 
     def file_tonext(self):
         self.file_change(self.filenext)

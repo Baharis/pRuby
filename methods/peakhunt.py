@@ -315,19 +315,19 @@ def dromedaries_fit(dots):
 
     # ESTIMATE INITIAL GAUSSIAN & LORENTZIAN PARAMETERS
     mu1, mu2 = peaks[0, 0], peaks[1, 0]
-    a1, a2 = 0.75*peaks[0, 1], 0.75*peaks[1, 1]
+    a1, a2 = 0.75 * peaks[0, 1], 0.75 * peaks[1, 1]
     si1, si2 = 0.35, 0.35
-    b1, b2 = 0.25*peaks[0, 1], 0.25*peaks[1, 1]
-    ta1, ta2 = 1.00, 1.00
+    b1, b2 = 0.20 * peaks[0, 1], 0.20 * peaks[1, 1]
+    ta1, ta2 = 0.7, 0.7
     guess = (mu1, a1, si1, b1, ta1, mu2, a2, si2, b2, ta2)
 
     # TRIM DATA AND FIT THE DROMEDARIES CURVE
-    x_beg = peaks[1, 0] - 2 * peakhunt_range
-    x_end = peaks[0, 0] + 2 * peakhunt_range
+    x_beg = peaks[1, 0] - 3 * peakhunt_range
+    x_end = peaks[0, 0] + 3 * peakhunt_range
     dots = trim_to_range(dots, x_beg, x_end)
     dots_sigma = peaks[0, 1] * np.power(dots[:, 1], -1)
     popt, pcov = curve_fit(dromedaries, xdata=dots[:, 0], ydata=dots[:, 1],
-                           p0=guess, sigma=dots_sigma)
+                          p0=guess, sigma=dots_sigma)
     # popt, pcov = guess, guess
     sigma = np.sqrt(np.diag(pcov))
 
