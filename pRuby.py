@@ -28,7 +28,7 @@ class Application(tk.Frame):
         self.t_sam = self.t_ref
         self.p1_sam = self.p1_ref
         self.dots = None
-        self.data_draw_on_import = tk.BooleanVar(value=False)
+        self.data_autodraw = tk.BooleanVar(value=False)
         self.filenext = ''
         self.fileprevious = ''
         self.fit_color_cycle = cycle_generator(('r', 'g', 'b', 'c', 'm', 'y'))
@@ -60,9 +60,9 @@ class Application(tk.Frame):
                                    command=self.data_to_reference)
         self.menu_data.add_command(label='From reference',
                                    command=self.data_from_reference)
-        self.menu_data.add_checkbutton(label='Draw on import',
+        self.menu_data.add_checkbutton(label='Auto draw',
                                        onvalue=True, offvalue=False,
-                                       variable=self.data_draw_on_import)
+                                       variable=self.data_autodraw)
         self.menu_methods = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Methods", menu=self.menu_methods)
         for key, m in self.peakhunt_methods.items():
@@ -135,6 +135,33 @@ class Application(tk.Frame):
                   'For details and help, visit pRuby page' \
                   '(https://github.com/Baharis/pRuby).'
         tkmb.showinfo(title='About pRuby', message=message)
+
+    @staticmethod
+    def cut_dots_to_690_700(dots):
+        dots = dots[dots[:, 0].argsort()]
+        new_dots = []
+        for x, y in zip(dots[:, 0], dots[:, 1]):
+            if 690 <= x <= 700:
+                new_dots.append([x, y])
+        return np.array(new_dots, dtype=(float, float))
+
+    @staticmethod
+    def _parse_txt(path):
+        return np.loadtxt(path, dtype=(float, float))
+
+    @staticmethod
+    def _parse_other(path):
+        file = open(path, "r")
+        dots = []
+        for line in file.readlines():
+            try:
+                x = float(line.strip().split()[0])
+                y = float(line.strip().split()[1])
+            except ValueError:
+                pass
+            else:
+                dots.append([x, y])
+        return np.array(dots, dtype=(float, float))
 
     def data_draw(self):
         # RETURN IF NO FILE HAS BEEN IMPORTED YET
@@ -214,11 +241,13 @@ class Application(tk.Frame):
             initialdir=os.getcwd())
         if len(path) > 0:
             try:
-                dots = np.loadtxt(path, dtype=(float, float))
+                dots = self._parse_txt(path)
+            except ValueError:
+                dots = self._parse_other(path)
             except PermissionError:
                 tkmb.showerror(message='No permissions to read this file')
                 return
-            except (ValueError, TypeError):
+            except TypeError:
                 tkmb.showerror(message='Cannot interpret file content')
                 return
         else:
@@ -227,10 +256,10 @@ class Application(tk.Frame):
         self.filename_stringvar.set(filename)
         os.chdir(directory)
         self.file_list()
-        self.dots = dots[dots[:, 0].argsort()]
+        self.dots = self.cut_dots_to_690_700(dots=dots)
         self.data_fit()
         self.calculate_p1()
-        if self.data_draw_on_import.get() is True:
+        if self.data_autodraw.get() is True:
             self.data_draw()
 
     def data_to_reference(self):
@@ -261,7 +290,7 @@ class Application(tk.Frame):
         self.file_list()
         self.data_fit()
         self.calculate_p1()
-        if self.data_draw_on_import.get() is True:
+        if self.data_autodraw.get() is True:
             self.data_draw()
 
     def file_fromentry(self, *_):
@@ -301,6 +330,8 @@ class Application(tk.Frame):
          self.tempcorr_methods[self.method_tempcorr_stringvar.get()]['function']
         if self.dots is not None:
             self.data_fit()
+        if self.data_autodraw.get() is True:
+            self.data_draw()
         self.calculate_p1()
 
 
