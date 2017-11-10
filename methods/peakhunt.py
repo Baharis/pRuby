@@ -3,7 +3,7 @@ from scipy.signal import find_peaks_cwt
 from scipy.optimize import curve_fit, minimize_scalar
 
 # PEAKHUNT RANGE
-peakhunt_range = 0.2
+peakhunt_range = 0.20
 
 
 # HELPER FUNCTIONS
@@ -26,7 +26,7 @@ def methods():
                                 'desc':     'G+g+G'},
             'dromedaries_fit': {'function': dromedaries_fit,
                                 'name':     'Dromedaries Fit',
-                                'desc':     'GLg+GLg'}
+                                'desc':     'Gg+Gg'}
             }
 
 
@@ -99,15 +99,13 @@ def camel_fixed(a1, mu1, si1, a2, mu2, si2, a12, mu12, si12):
 def dromedaries(x, mu1, a1, si1, b1, ta1, mu2, a2, si2, b2, ta2):
     """	Input:  x - given point for which dromedaries is calculated
                     For each of the maxima: suffix 1 for r1, 2 for r2
-               mu - center of cauchy and both gaussian functions
+               mu - center of both gaussian functions
                 a - height of the signal gaussian function
                si - standard deviation of the signal gaussian function
                 b - height of the noise gaussian function
                ta - standard deviation of the noise gaussian function
-                c - height of the signal lorentz function
-               ga - probable error of the signal lorentz function (floats)
         Return:	value of function with desired parameters in x (float)
-        Descr.: Calculate GLg+GLg-type function for given x and parameters"""
+        Descr.: Calculate Gg+Gg-type function for given x and parameters"""
     # R2 signal gauss + R2 noise gauss +
     # R1 signal gauss + R1 noise gauss
     return gauss(x, a2, mu2, si2) + gauss(x, b2, mu2, ta2) + \
@@ -116,7 +114,7 @@ def dromedaries(x, mu1, a1, si1, b1, ta1, mu2, a2, si2, b2, ta2):
 
 def dromedaries_fixed(mu1, a1, si1, b1, ta1, mu2, a2, si2, b2, ta2):
     """	Input:      For each of the maxima: suffix 1 for r1, 2 for r2
-               mu - center of cauchy and both gaussian functions
+               mu - center of both gaussian functions
                 a - height of the signal gaussian function
                si - standard deviation of the signal gaussian function
                 b - height of the noise gaussian function
@@ -125,6 +123,36 @@ def dromedaries_fixed(mu1, a1, si1, b1, ta1, mu2, a2, si2, b2, ta2):
         Descr.: Produce Gg+Gg(x)-type function with fixed parameters"""
     def dromedaries_baby(x):
         return dromedaries(x, mu1, a1, si1, b1, ta1, mu2, a2, si2, b2, ta2)
+    return dromedaries_baby
+
+
+def dromedaries_2(x, mu1, a1, si1, b1, ga1, mu2, a2, si2, b2, ga2):
+    """	Input:  x - given point for which dromedaries is calculated
+                    For each of the maxima: suffix 1 for r1, 2 for r2
+               mu - center of lorentz and gaussian functions
+                a - height of the signal lorentz function
+               si - standard deviation of the signal gaussian function
+                b - height of the signal lorentz function
+               ga - probable error of the signal lorentz function (floats)
+        Return:	value of function with desired parameters in x (float)
+        Descr.: Calculate Lg+Lg-type function for given x and parameters"""
+    # R2 signal gauss + R2 noise gauss +
+    # R1 signal gauss + R1 noise gauss
+    return gauss(x, a2, mu2, si2) + lorentz(x, b2, mu2, ga2) + \
+        gauss(x, a1, mu1, si1) + lorentz(x, b1, mu1, ga1)
+
+
+def dromedaries_fixed_2(mu1, a1, si1, b1, ga1, mu2, a2, si2, b2, ga2):
+    """	Input:      For each of the maxima: suffix 1 for r1, 2 for r2
+               mu - center of lorentz and gaussian functions
+                a - height of the signal lorentz function
+               si - standard deviation of the signal gaussian function
+                b - height of the signal lorentz function
+               ga - probable error of the signal lorentz function (floats)
+        Return:	dromedaries function of an 'x' parameter      (float)
+        Descr.: Produce Gg+Gg(x)-type function with fixed parameters"""
+    def dromedaries_baby(x):
+        return dromedaries_2(x, mu1, a1, si1, b1, ga1, mu2, a2, si2, b2, ga2)
     return dromedaries_baby
 
 
@@ -340,6 +368,47 @@ def dromedaries_fit(dots):
             'r2_int': dromedaries(popt[5], *popt) + background(popt[5]),
             'fit_function':
                 [lambda x: dromedaries_fixed(*popt)(x) + background(x)],
+            'fit_range': [(x_beg, x_end)]}
+
+
+def dromedaries_fit_2(dots):
+    """	Input:	dots - ruby spectrum data (n x 2 ndarray)
+        Return:	dict with r1, r2 and fit description
+        Descr.: Fit Lg+Lg-type "dromedaries" function to dots"""
+
+    # LOAD PEAKS AND ESTIMATE BACKGROUND
+    estimated_background = estimate_background(dots)
+    background = estimated_background['background']
+    dots = estimated_background['corrected_dots']
+    peaks = peak_search(dots)[:2, :]
+
+    # ESTIMATE INITIAL GAUSSIAN & LORENTZIAN PARAMETERS
+    mu1, mu2 = peaks[0, 0], peaks[1, 0]
+    a1, a2 = 0.75 * peaks[0, 1], 0.75 * peaks[1, 1]
+    si1, si2 = 0.35, 0.35
+    b1, b2 = 0.20 * peaks[0, 1], 0.20 * peaks[1, 1]
+    ga1, ga2 = 0.7, 0.7
+    guess = (mu1, a1, si1, b1, ga1, mu2, a2, si2, b2, ga2)
+
+    # TRIM DATA AND FIT THE DROMEDARIES CURVE
+    x_beg = peaks[1, 0] - 3 * peakhunt_range
+    x_end = peaks[0, 0] + 3 * peakhunt_range
+    dots = trim_to_range(dots, x_beg, x_end)
+    dots_sigma = peaks[0, 1] * np.power(dots[:, 1], -1)
+    popt, pcov = curve_fit(dromedaries_2, xdata=dots[:, 0], ydata=dots[:, 1],
+                          p0=guess, sigma=dots_sigma)
+    # popt, pcov = guess, guess
+    sigma = np.sqrt(np.diag(pcov))
+
+    # RETURN DATA
+    return {'r1_val': popt[0],
+            'r1_unc': sigma[0],
+            'r1_int': dromedaries_2(popt[0], *popt) + background(popt[0]),
+            'r2_val': popt[5],
+            'r2_unc': sigma[5],
+            'r2_int': dromedaries_2(popt[5], *popt) + background(popt[5]),
+            'fit_function':
+                [lambda x: dromedaries_fixed_2(*popt)(x) + background(x)],
             'fit_range': [(x_beg, x_end)]}
 
 

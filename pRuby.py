@@ -233,6 +233,7 @@ class Application(tk.Frame):
             self.r1_sam = uc.ufloat(self.peakhunt_results['r1_val'],
                                     self.peakhunt_results['r1_unc'])
             self.r1_ufloatvar.set(value=self.r1_sam)
+            print(self.peakhunt_results)
 
     def data_import(self):
         path = tkfd.askopenfilename(
@@ -271,7 +272,6 @@ class Application(tk.Frame):
         self.calculate_p1()
         if self.data_autodraw.get() is True:
             self.data_draw()
-        print(self.data_autodraw.get())
 
     def data_to_reference(self):
         self.r1_ref = uc.ufloat_fromstr(self.r1_ufloatvar.get())
@@ -309,9 +309,6 @@ class Application(tk.Frame):
             self.fileprevious = filelist[fileindex - 1]
         except IndexError:
             self.fileprevious = ''
-        print(filelist)
-        print(self.filenext)
-        print(self.fileprevious)
 
     def file_tonext(self):
         self.file_change(self.filenext)
