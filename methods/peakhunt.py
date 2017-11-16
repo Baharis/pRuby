@@ -3,7 +3,7 @@ from scipy.signal import find_peaks_cwt
 from scipy.optimize import curve_fit, minimize_scalar
 
 # PEAKHUNT RANGE
-peakhunt_range = 0.20
+peakhunt_range = 0.40
 
 
 # HELPER FUNCTIONS
@@ -26,7 +26,10 @@ def methods():
                                 'desc':     'G+g+G'},
             'dromedaries_fit': {'function': dromedaries_fit,
                                 'name':     'Dromedaries Fit',
-                                'desc':     'Gg+Gg'}
+                                'desc':     'Gg+Gg'},
+            'dromedaries_fit_2': {'function': dromedaries_fit_2,
+                                'name': 'Dromedaries Fit_2',
+                                'desc': 'Gg+Gg'}
             }
 
 
@@ -355,7 +358,7 @@ def dromedaries_fit(dots):
     dots = trim_to_range(dots, x_beg, x_end)
     dots_sigma = peaks[0, 1] * np.power(dots[:, 1], -1)
     popt, pcov = curve_fit(dromedaries, xdata=dots[:, 0], ydata=dots[:, 1],
-                          p0=guess, sigma=dots_sigma)
+                          p0=guess) # sigma=dots_sigma
     # popt, pcov = guess, guess
     sigma = np.sqrt(np.diag(pcov))
 
@@ -396,7 +399,7 @@ def dromedaries_fit_2(dots):
     dots = trim_to_range(dots, x_beg, x_end)
     dots_sigma = peaks[0, 1] * np.power(dots[:, 1], -1)
     popt, pcov = curve_fit(dromedaries_2, xdata=dots[:, 0], ydata=dots[:, 1],
-                          p0=guess, sigma=dots_sigma)
+                          p0=guess)
     # popt, pcov = guess, guess
     sigma = np.sqrt(np.diag(pcov))
 
