@@ -137,11 +137,11 @@ class Application(tk.Frame):
         tkmb.showinfo(title='About pRuby', message=message)
 
     @staticmethod
-    def cut_dots_to_690_700(dots):
+    def cut_dots_to_690_710(dots):
         dots = dots[dots[:, 0].argsort()]
         new_dots = []
         for x, y in zip(dots[:, 0], dots[:, 1]):
-            if 690 <= x <= 700:
+            if 690 <= x <= 710:
                 new_dots.append([x, y])
         return np.array(new_dots, dtype=(float, float))
 
@@ -173,7 +173,7 @@ class Application(tk.Frame):
         dots_x = self.dots[:, 0]
         dots_y = self.dots[:, 1]
         x_min = 690.0
-        x_max = 700.0
+        x_max = 710.0
         x_span = x_max - x_min
         y_span = np.max(dots_y) - np.min(dots_y)
         y_min = min(np.min(dots_y) - 0.01 * y_span, 0)
@@ -267,7 +267,7 @@ class Application(tk.Frame):
         except FileNotFoundError:
             pass
         self.file_list()
-        self.dots = self.cut_dots_to_690_700(dots=dots)
+        self.dots = self.cut_dots_to_690_710(dots=dots)
         self.data_fit()
         self.calculate_p1()
         if self.data_autodraw.get() is True:

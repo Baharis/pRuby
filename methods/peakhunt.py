@@ -8,28 +8,34 @@ peakhunt_range = 0.40
 
 # HELPER FUNCTIONS
 def default():
-    return labspec_fit
+    return gauss_fit
 
 
 def methods():
     return {'gauss_fit':       {'function': gauss_fit,
                                 'name':     'Gauss Fit',
                                 'desc':     'G&G'},
-            'labspec_fit':     {'function': labspec_fit,
-                                'name':     'Labspec Fit',
-                                'desc':     'GL&GL'},
-            'bactrian_fit':    {'function': bactrian_fit,
-                                'name':     'Bactrian Fit',
-                                'desc':     'G+G'},
+            # LEGACY: inverior version of pseudo-Voigt
+            # 'labspec_fit':     {'function': labspec_fit,
+            #                     'name':     'Labspec Fit',
+            #                     'desc':     'GL&GL'},
+            # LEGACY: used previously only as a counterexample
+            # 'bactrian_fit':    {'function': bactrian_fit,
+            #                     'name':     'Bactrian Fit',
+            #                     'desc':     'G+G'},
             'camel_fit':       {'function': camel_fit,
                                 'name':     'Camel Fit',
                                 'desc':     'G+g+G'},
-            'dromedaries_fit': {'function': dromedaries_fit,
-                                'name':     'Dromedaries Fit',
-                                'desc':     'Gg+Gg'},
+            # LEGACY: dromaderies 2 works better
+            # 'dromedaries_fit': {'function': dromedaries_fit,
+            #                     'name':     'Dromedaries Fit',
+            #                     'desc':     'Gg+Gg'},
             'dromedaries_fit_2': {'function': dromedaries_fit_2,
-                                'name': 'Dromedaries Fit_2',
-                                'desc': 'Gg+Gg'}
+                                'name': 'Dromedaries Fit',
+                                'desc': 'Lg+Lg'},
+            'pseudovoigt_fit': {'function': pseudovoigt_fit,
+                                'name': 'Pseudo-Voigt Fit',
+                                'desc': 'LG+LG'}
             }
 
 
@@ -207,6 +213,38 @@ def lorentz(x, a, mu, ga):
     return (a * ga ** 2) / ((x - mu) ** 2 + ga ** 2)
 
 
+def pseudovoigt(x, mu1, a1, w1, et1, mu2, a2, w2, et2):
+    """	Input:  x - given point for which dromedaries is calculated
+                    For each of the maxima: suffix 1 for r1, 2 for r2
+               mu - center of both pseudo-voigt functions
+                a - height of the total signal of both functions
+                w - pseudo-voigt half-with of the both functions
+               et - percentege of gaussian component in both pseudo-voigts
+        Return:	value of function with desired parameters in x (float)
+        Descr.: Calculate GL+GL-type function for given x and parameters"""
+    si2 = w2/(np.sqrt(8*np.log(2)))
+    si1 = w1/(np.sqrt(8*np.log(2)))
+    ga2 = w2 / 2
+    ga1 = w1 / 2
+    # R2 signal gauss + R2 signal laplace +
+    # R1 signal gauss + R1 signal laplace
+    return et1 * gauss(x, a2, mu2, si2) + \
+           (1 - et1) * lorentz(x, a2, mu2, ga2) + \
+           et2 * gauss(x, a1, mu1, si1) + \
+           (1 - et2) * lorentz(x, a1, mu1, ga1)
+
+
+def pseudovoigt_fixed(mu1, a1, w1, et1, mu2, a2, w2, et2):
+    """	Input:      For each of the maxima: suffix 1 for r1, 2 for r2
+               mu - center of both pseudo-voigt functions
+                a - height of the total signal of both functions
+                w - pseudo-voigt half-with of the both functions
+               et - percentege of gaussian component in both pseudo-voigts
+        Return:	pseudo-voigt function of an 'x' parameter      (float)
+        Descr.: Produce GL+GL(x)-type function with fixed parameters"""
+    return lambda x: pseudovoigt(x, mu1, a1, w1, et1, mu2, a2, w2, et2)
+
+
 def peak_search(dots):
     """	Input:	dots - ruby spectrum data (n x 2 ndarray)
         Return:	list of data biggest peaks (n x 2 ndarray)
@@ -371,6 +409,47 @@ def dromedaries_fit(dots):
             'r2_int': dromedaries(popt[5], *popt) + background(popt[5]),
             'fit_function':
                 [lambda x: dromedaries_fixed(*popt)(x) + background(x)],
+            'fit_range': [(x_beg, x_end)]}
+
+
+def pseudovoigt_fit(dots):
+    """	Input:	dots - ruby spectrum data (n x 2 ndarray)
+        Return:	dict with r1, r2 and fit description
+        Descr.: Fit GL+GL-type "dromedaries" function to dots"""
+
+    # LOAD PEAKS AND ESTIMATE BACKGROUND
+    estimated_background = estimate_background(dots)
+    background = estimated_background['background']
+    dots = estimated_background['corrected_dots']
+    peaks = peak_search(dots)[:2, :]
+
+    # ESTIMATE INITIAL GAUSSIAN & LORENTZIAN PARAMETERS
+    mu1, mu2 = peaks[0, 0], peaks[1, 0]
+    a1, a2 = peaks[0, 1], peaks[1, 1]
+    w1, w2 = 0.75, 0.75  # 57/46 57/46 56/47 82/75
+    et1, et2 = 0.5, 0.25  # 33/1 32/2 31/5 66/36
+    guess = (mu1, a1, w1, et1, mu2, a2, w2, et2)
+    print(guess)
+
+    # TRIM DATA AND FIT THE DROMEDARIES CURVE
+    x_beg = peaks[1, 0] - 3 * peakhunt_range
+    x_end = peaks[0, 0] + 3 * peakhunt_range
+    dots = trim_to_range(dots, x_beg, x_end)
+    popt, pcov = curve_fit(pseudovoigt, xdata=dots[:, 0], ydata=dots[:, 1],
+                          p0=guess)
+    # popt, pcov = guess, guess
+    print(popt)
+    sigma = np.sqrt(np.diag(pcov))
+
+    # RETURN DATA
+    return {'r1_val': popt[0],
+            'r1_unc': sigma[0],
+            'r1_int': pseudovoigt(popt[0], *popt) + background(popt[0]),
+            'r2_val': popt[5],
+            'r2_unc': sigma[5],
+            'r2_int': pseudovoigt(popt[5], *popt) + background(popt[5]),
+            'fit_function':
+                [lambda x: pseudovoigt_fixed(*popt)(x) + background(x)],
             'fit_range': [(x_beg, x_end)]}
 
 
