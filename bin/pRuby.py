@@ -14,6 +14,7 @@ from utility.cycle_generator import cycle_generator
 import utility.tk_objects as tkob
 #test comment 3
 
+
 class Application(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
@@ -233,7 +234,6 @@ class Application(tk.Frame):
             self.r1_sam = uc.ufloat(self.peakhunt_results['r1_val'],
                                     self.peakhunt_results['r1_unc'])
             self.r1_ufloatvar.set(value=self.r1_sam)
-            print(self.peakhunt_results)
 
     def data_import(self):
         path = tkfd.askopenfilename(
