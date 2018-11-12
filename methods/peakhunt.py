@@ -3,77 +3,20 @@ from collections import OrderedDict
 from scipy.signal import find_peaks_cwt
 from scipy.optimize import curve_fit, minimize_scalar
 
-# PEAKHUNT RANGE
-peakhunt_range = 0.40
+fit_range = 0.40
+# TODO add background subtraction deinitely
 
 
-# HELPER FUNCTIONS
 def default():
-    return gauss_fit
+    return GaussPeakhunt
 
 
 def methods():
+    peakhunts = GaussPeakhunt, GausslorentzPeakhunt, PseudovoigtPeakhunt
     dict_of_methods = OrderedDict()
-    dict_of_methods['gauss_fit'] = {'function': gauss_fit,
-                                    'name': 'Gauss Fit'}
-    dict_of_methods['camel_fit'] = {'function': camel_fit,
-                                    'name': 'Camel Fit'}
-    dict_of_methods['dromaderies_fit'] = {'function': dromedaries_fit,
-                                          'name': 'Dromaderies Fit'}
-    dict_of_methods['pseudovoigt_fit'] = {'function': pseudovoigt_fit,
-                                           'name': 'Pseudo-Voigt Fit'}
+    for ph in peakhunts:
+        dict_of_methods[ph.id] = ph
     return dict_of_methods
-
-
-def make_dependent_on_x(func):
-    return lambda x, *args: func(*args)(x)
-
-
-def calculate_error(dots, func):
-    error_sum = 0
-    for dot in dots:
-        error = np.power(dot[1] - func(dot[0]), 2)
-        error_sum += error
-    error_sum /= len(dots)
-    print(error_sum)
-
-
-# DOTS MENAGEMENT FUNCTIONS
-def trim_to_range(dots, x_beg, x_end):
-    indices_to_delete = \
-        [index for index, x in enumerate(dots[:, 0]) if x < x_beg or x > x_end]
-    return np.delete(dots, indices_to_delete, axis=0)
-
-
-# BASIC FUNCTIONS
-def linear(a, b):
-    """	Input:  a, b - coeffitients for linear background function a * x + b
-        Return:	linear function of an 'x' parameter      (float)
-        Descr.: Produce linear function with fixed parameters"""
-    return lambda x: a * x + b
-
-
-def camel(a1, mu1, si1, a2, mu2, si2, a12, mu12, si12):
-    """	Input:  a2, mu2, si2 - r2 gaussian coeffitients
-                a1, mu1, si1 - r1 gaussian coeffitients
-                a12, mu12, si12 - background gaussian coeffitients (float)s
-        Return:	camel function of an 'x' parameter      (float)
-        Descr.: Produce G+g+G(x)-type function with fixed parameters"""
-    return lambda x: gauss(a2, mu2, si2)(x) + gauss(a1, mu1, si1)(x)\
-                     + gauss(a12, mu12, si12)(x)
-
-
-def dromedaries(mu1, a1, si1, b1, ga1, mu2, a2, si2, b2, ga2):
-    """	Input:      For each of the maxima: suffix 1 for r1, 2 for r2
-               mu - center of lorentz and gaussian functions
-                a - height of the signal lorentz function
-               si - standard deviation of the signal gaussian function
-                b - height of the signal lorentz function
-               ga - probable error of the signal lorentz function (floats)
-        Return:	dromedaries function of an 'x' parameter      (float)
-        Descr.: Produce Gg+Gg(x)-type function with fixed parameters"""
-    return lambda x: gauss(a2, mu2, si2)(x) + lorentz(b2, mu2, ga2)(x) + \
-                     gauss(a1, mu1, si1)(x) + lorentz(b1, mu1, ga1)(x)
 
 
 def gauss(a, mu, si):
@@ -90,241 +33,207 @@ def lorentz(a, mu, ga):
     return lambda x: (a * ga ** 2) / ((x - mu) ** 2 + ga ** 2)
 
 
-def pseudovoigt(mu1, a1, w1, et1, mu2, a2, w2, et2):
-    """	Input:      For each of the maxima: suffix 1 for r1, 2 for r2
-               mu - center of both pseudo-voigt functions
-                a - height of the total signal of both functions
-                w - pseudo-voigt half-with of the both functions
-               et - percentege of gaussian component in both pseudo-voigts
-        Return:	pseudo-voigt function of an 'x' parameter      (float)
-        Descr.: Produce GL+GL(x)-type function with fixed parameters"""
-    si2 = w2/(np.sqrt(8*np.log(2)))
-    si1 = w1/(np.sqrt(8*np.log(2)))
-    ga2 = w2 / 2
-    ga1 = w1 / 2
-    return lambda x: et1 * gauss(a2, mu2, si2)(x) + \
-                     (1 - et1) * lorentz(a2, mu2, ga2)(x) + \
-                     et2 * gauss(a1, mu1, si1)(x) + \
-                     (1 - et2) * lorentz(a1, mu1, ga1)(x)
+class TemplatePeakhunt:
+    fit_range_multiplier = 1.0
+
+    def __init__(self):
+        self.f = lambda x: 0.0
+        self.r1_int = float()
+        self.r1_val = float()
+        self.r1_unc = float()
+        self.r2_int = float()
+        self.r2_val = float()
+        self.r2_unc = float()
+        self.x = np.array(list(tuple()))
+        self.y = np.array(list(tuple()))
+
+    @property
+    def areas(self):
+        x_beg1 = self.r2_val - fit_range * self.fit_range_multiplier
+        x_end1 = self.r2_val + fit_range * self.fit_range_multiplier
+        x_beg2 = self.r1_val - fit_range * self.fit_range_multiplier
+        x_end2 = self.r1_val + fit_range * self.fit_range_multiplier
+        return (x_beg1, x_end1), (x_beg2, x_end2)
+
+    @property
+    def mse(self):
+        e2_sum = sum([(y - self.f(x)) ** 2 for x, y in zip(self.x, self.y)])
+        return e2_sum / len(self.x)
+
+    def curve(self, *_):
+        return lambda x: 0.0
+
+    @property
+    def curve_dependent_on_x(self):
+        return lambda x, *args: self.curve(*args)(x)
+
+    def find_peak_candidates(self):
+        peak_indexes = find_peaks_cwt(vector=self.y, widths=[5, 5, 5, 5, 5])
+        peaks = np.array([(self.x[i], self.y[i]) for i in peak_indexes])
+        peaks = peaks[peaks[:, 1].argsort()[::-1]]
+        second_not_found = len(peaks) == 1
+        second_out_of_range = not(peaks[0][0] - 2 < peaks[1][0] < peaks[0][0])
+        if second_not_found or second_out_of_range:
+            peaks = np.array(((peaks[0, 0], peaks[0, 1]),
+                              (peaks[0, 0] - 1.5, 0.5 * peaks[0, 1])))
+        self.r1_val = peaks[0, 0]
+        self.r1_unc = 1.0
+        self.r1_int = peaks[0, 1]
+        self.r2_val = peaks[1, 0]
+        self.r2_unc = 1.0
+        self.r2_int = peaks[1, 1]
+
+    def fit(self, dots):
+        self.import_dots(dots=dots)
+        self.find_peak_candidates()
+        self.trim_dots_to_areas()
+        one_over_y = [1/max(abs(y), 1e-9) for y in self.y]
+        popt, pcov = curve_fit(self.curve_dependent_on_x,
+                               xdata=self.x, ydata=self.y,
+                               p0=self.prediction, sigma=one_over_y)
+        popt, pcov = curve_fit(self.curve_dependent_on_x,
+                               xdata=self.x, ydata=self.y, p0=popt)
+        sigma = np.sqrt(np.diag(pcov))
+        self.update_function(popt)
+        self.update_r1_and_r2_horizontal(popt, sigma)
+        self.update_r1_and_r2_vertical()
+
+    def import_dots(self, dots):
+        self.x = np.array(dots[:, 0])
+        self.y = np.array(dots[:, 1])
+
+    @property
+    def peak_broadening(self):
+        return 1.0 + 0.1 * (self.r1_val - 695.0)
+
+    @property
+    def prediction(self):
+        return tuple()
+
+    def trim_dots_to_areas(self):
+        indices_in_area = np.zeros(len(self.x), dtype=bool)
+        for area in self.areas:
+            left, right = area
+            for i, x in enumerate(self.x):
+                if left <= x <= right:
+                    indices_in_area[i] = True
+        self.x = self.x[indices_in_area]
+        self.y = self.y[indices_in_area]
+
+    def update_function(self, popt):
+        self.f = lambda x: self.curve(*popt)(x)
+
+    def update_r1_and_r2_horizontal(self, popt, sigma):
+        pass
+
+    def update_r1_and_r2_vertical(self):
+        self.r1_int = self.f(self.r1_val)
+        self.r2_int = self.f(self.r2_val)
 
 
-def peak_search(dots):
-    """	Input:	dots - ruby spectrum data (n x 2 ndarray)
-        Return:	list of data biggest peaks (n x 2 ndarray)
-        Descr.: Find and sort biggest peaks in dots data"""
-    peak_indexes = find_peaks_cwt(vector=dots[:, 1], widths=[10])
-    peaks = np.array([dots[index, :] for index in peak_indexes])
-    peaks = peaks[peaks[:, 1].argsort()[::-1]]
-    return peaks
+class GaussPeakhunt(TemplatePeakhunt):
+    id = 'gauss_fit'
+    name = 'Gauss Fit'
+    fit_range_multiplier = 1.0
+
+    def curve(self, a1, mu1, si1, a2, mu2, si2):
+        return lambda x: gauss(a1, mu1, si1)(x) + gauss(a2, mu2, si2)(x)
+
+    @property
+    def prediction(self):
+        a1 = self.r1_int
+        mu1 = self.r1_val
+        si1 = 0.25 * self.peak_broadening
+        a2 = self.r2_int
+        mu2 = self.r2_val
+        si2 = 0.25 * self.peak_broadening
+        return a1, mu1, si1, a2, mu2, si2
+
+    def update_r1_and_r2_horizontal(self, popt, sigma):
+        self.r1_val = popt[1]
+        self.r1_unc = sigma[1]
+        self.r2_val = popt[4]
+        self.r2_unc = sigma[4]
 
 
-# BACKGROUND ESTIMATION
-def estimate_background(dots):
-    # PREPARE 20 EDGE DOTS TO ESTIMATE BACKGROUND
-    left_edge_dots = np.array(dots[:10, :], dtype=(float, float))
-    right_edge_dots = np.array(dots[-10:, :], dtype=(float, float))
-    edge_dots = np.concatenate((left_edge_dots, right_edge_dots))
+class GausslorentzPeakhunt(TemplatePeakhunt):
+    id = 'gausslorentz_fit'
+    name = 'Gauss-Lorentz Fit'
+    fit_range_multiplier = 3.0
 
-    # ESTIMATE INITIAL BACKGROUND PARAMETERS
-    a = (dots[-1, 1] - dots[0, 1]) / (dots[-1, 0] - dots[0, 0])
-    b = dots[0, 1] - a * dots[0, 0]
-    guess = (a, b)
+    def curve(self, a1, mu1, si1, b1, ga1, a2, mu2, si2, b2, ga2):
+        return lambda x: gauss(a2, mu2, si2)(x) + lorentz(b2, mu2, ga2)(x) + \
+                         gauss(a1, mu1, si1)(x) + lorentz(b1, mu1, ga1)(x)
 
-    # FIT LINEAR BACKGROUND TO THE EDGE DOTS
-    popt, pcov = curve_fit(make_dependent_on_x(linear), xdata=edge_dots[:, 0],
-                           ydata=edge_dots[:, 1], p0=guess)
+    @property
+    def prediction(self):
+        a1 = 0.75 * self.r1_int
+        mu1 = self.r1_val
+        si1 = 0.25 * self.peak_broadening
+        b1 = 0.25 * self.r1_int
+        ga1 = 0.50 * self.peak_broadening
+        a2 = 0.75 * self.r2_int
+        mu2 = self.r2_val
+        si2 = 0.25 * self.peak_broadening
+        b2 = 0.25 * self.r2_int
+        ga2 = 0.25 * self.peak_broadening
+        return a1, mu1, si1, b1, ga1, a2, mu2, si2, b2, ga2
 
-    # PREPARE DOTS CORRECTED FOR BACKGROUND
-    background = linear(popt[0], popt[1])
-    corrected_dots = []
-    for x, y in zip(dots[:, 0], dots[:, 1]):
-        corrected_dots.append([x, y - background(x)])
-    corrected_dots = np.array(corrected_dots, dtype=(float, float))
-
-    # RETURN DATA
-    return {'corrected_dots': corrected_dots,
-            'background': background}
-
-
-# FIT FUNCTIONS
-def camel_fit(dots):
-    """	Input:	dots - ruby spectrum data (n x 2 ndarray)
-        Return:	dict with r1, r2 and fit description
-        Descr.: Fit G+g+G-type "camel" function to dots"""
-
-    # LOAD PEAKS AND ESTIMATE BACKGROUND
-    estimated_background = estimate_background(dots)
-    background = estimated_background['background']
-    dots = estimated_background['corrected_dots']
-    peaks = peak_search(dots)[:2, :]
-
-    # ESTIMATE INITIAL GAUSSIAN PARAMETERS
-    si1, si2, si12 = 0.35, 0.35, 1.0
-    mu1 = peaks[0, 0]
-    a1 = peaks[0, 1]
-    mu2 = peaks[1, 0]
-    a2 = peaks[1, 1]
-    a12 = 0.1 * (a1 + a2)
-    mu12 = 0.5 * (mu1 + mu2)
-    guess = (a1, mu1, si1, a2, mu2, si2, a12, mu12, si12)
-
-    # TRIM DATA AND FIT CAMEL CURVE
-    x_beg = peaks[1, 0] - 2 * peakhunt_range
-    x_end = peaks[0, 0] + 2 * peakhunt_range
-    dots = trim_to_range(dots, x_beg, x_end)
-    dots_sigma = peaks[0, 1] * np.power(dots[:, 1], -1)
-    popt, pcov = curve_fit(make_dependent_on_x(camel), xdata=dots[:, 0],
-                           ydata=dots[:, 1], p0=guess, sigma=dots_sigma)
-    sigma = np.sqrt(np.diag(pcov))
-
-    # FIND ACTUAL MAXIMA AND RETURN DATA
-    dx = peakhunt_range
-    r1_val = minimize_scalar(lambda x: -camel(*popt)(x), method='Bounded',
-                             bounds=(popt[1]-dx, popt[1]+dx)).x
-    r2_val = minimize_scalar(lambda x: -camel(*popt)(x), method='Bounded',
-                             bounds=(popt[4]-dx, popt[4]+dx)).x
-
-    calculate_error(dots, lambda x: camel(*popt)(x) + background(x))
-
-    return {'r1_val': r1_val,
-            'r1_unc': sigma[1],
-            'r1_int': camel(*popt)(r1_val) + background(r1_val),
-            'r2_val': r2_val,
-            'r2_unc': sigma[4],
-            'r2_int': camel(*popt)(r2_val) + background(r2_val),
-            'fit_function': [lambda x: camel(*popt)(x) + background(x)],
-            'fit_range': [(x_beg, x_end)]}
+    def update_r1_and_r2_horizontal(self, popt, sigma):
+        self.r1_val = popt[1]
+        self.r1_unc = sigma[1]
+        self.r2_val = popt[6]
+        self.r2_unc = sigma[6]
 
 
-def pseudovoigt_fit(dots):
-    """	Input:	dots - ruby spectrum data (n x 2 ndarray)
-        Return:	dict with r1, r2 and fit description
-        Descr.: Fit GL+GL-type "dromedaries" function to dots"""
+class PseudovoigtPeakhunt(TemplatePeakhunt):
+    id = 'pseudovoigt_fit'
+    name = 'Pseudo-Voigt Fit'
+    fit_range_multiplier = 3.0
 
-    # LOAD PEAKS AND ESTIMATE BACKGROUND
-    estimated_background = estimate_background(dots)
-    background = estimated_background['background']
-    dots = estimated_background['corrected_dots']
-    peaks = peak_search(dots)[:2, :]
+    def curve(self, a1, mu1, w1, et1, a2, mu2, w2, et2):
+        si2 = w2 / (np.sqrt(8 * np.log(2)))
+        si1 = w1 / (np.sqrt(8 * np.log(2)))
+        ga2 = w2 / 2
+        ga1 = w1 / 2
+        return lambda x: et1 * gauss(a2, mu2, si2)(x) + \
+                         (1 - et1) * lorentz(a2, mu2, ga2)(x) + \
+                         et2 * gauss(a1, mu1, si1)(x) + \
+                         (1 - et2) * lorentz(a1, mu1, ga1)(x)
 
-    # ESTIMATE INITIAL GAUSSIAN & LORENTZIAN PARAMETERS
-    mu1, mu2 = peaks[0, 0], peaks[1, 0]
-    a1, a2 = peaks[0, 1], peaks[1, 1]
-    w1, w2 = 0.75, 0.75
-    et1, et2 = 0.5, 0.25
-    guess = (mu1, a1, w1, et1, mu2, a2, w2, et2)
+    @property
+    def prediction(self):
+        a1 = self.r1_int
+        mu1 = self.r1_val
+        w1 = 0.6 * self.peak_broadening
+        et1 = 0.5
+        a2 = self.r2_int
+        mu2 = self.r2_val
+        w2 = 0.6 * self.peak_broadening
+        et2 = 0.25
+        return a1, mu1, w1, et1, a2, mu2, w2, et2
 
-    # TRIM DATA AND FIT THE DROMEDARIES CURVE
-    x_beg = peaks[1, 0] - 3 * peakhunt_range
-    x_end = peaks[0, 0] + 3 * peakhunt_range
-    dots = trim_to_range(dots, x_beg, x_end)
-    popt, pcov = curve_fit(make_dependent_on_x(pseudovoigt), xdata=dots[:, 0],
-                           ydata=dots[:, 1], p0=guess)
-    sigma = np.sqrt(np.diag(pcov))
-
-    calculate_error(dots, lambda x: pseudovoigt(*popt)(x) + background(x))
-
-    # RETURN DATA
-    return {'r1_val': popt[0],
-            'r1_unc': sigma[0],
-            'r1_int': pseudovoigt(*popt)(popt[0]) + background(popt[0]),
-            'r2_val': popt[4],
-            'r2_unc': sigma[4],
-            'r2_int': pseudovoigt(*popt)(popt[4]) + background(popt[4]),
-            'fit_function':
-                [lambda x: pseudovoigt(*popt)(x) + background(x)],
-            'fit_range': [(x_beg, x_end)]}
+    def update_r1_and_r2_horizontal(self, popt, sigma):
+        self.r1_val = popt[1]
+        self.r1_unc = sigma[1]
+        self.r2_val = popt[5]
+        self.r2_unc = sigma[5]
 
 
-def dromedaries_fit(dots):
-    """	Input:	dots - ruby spectrum data (n x 2 ndarray)
-        Return:	dict with r1, r2 and fit description
-        Descr.: Fit Lg+Lg-type "dromedaries" function to dots"""
-
-    # LOAD PEAKS AND ESTIMATE BACKGROUND
-    estimated_background = estimate_background(dots)
-    background = estimated_background['background']
-    dots = estimated_background['corrected_dots']
-    peaks = peak_search(dots)[:2, :]
-
-    # ESTIMATE INITIAL GAUSSIAN & LORENTZIAN PARAMETERS
-    mu1, mu2 = peaks[0, 0], peaks[1, 0]
-    a1, a2 = 0.75 * peaks[0, 1], 0.75 * peaks[1, 1]
-    si1, si2 = 0.35, 0.35
-    b1, b2 = 0.20 * peaks[0, 1], 0.20 * peaks[1, 1]
-    ga1, ga2 = 0.7, 0.7
-    guess = (mu1, a1, si1, b1, ga1, mu2, a2, si2, b2, ga2)
-
-    # TRIM DATA AND FIT THE DROMEDARIES CURVE
-    x_beg = peaks[1, 0] - 3 * peakhunt_range
-    x_end = peaks[0, 0] + 3 * peakhunt_range
-    dots = trim_to_range(dots, x_beg, x_end)
-    dots_sigma = peaks[0, 1] * np.power(dots[:, 1], -1)
-    popt, pcov = curve_fit(make_dependent_on_x(dromedaries), xdata=dots[:, 0],
-                           ydata=dots[:, 1], p0=guess)
-    sigma = np.sqrt(np.diag(pcov))
-
-    calculate_error(dots, lambda x: dromedaries(*popt)(x) + background(x))
-
-    # RETURN DATA
-    return {'r1_val': popt[0],
-            'r1_unc': sigma[0],
-            'r1_int': dromedaries(*popt)(popt[0]) + background(popt[0]),
-            'r2_val': popt[5],
-            'r2_unc': sigma[5],
-            'r2_int': dromedaries(*popt)(popt[5]) + background(popt[5]),
-            'fit_function':
-                [lambda x: dromedaries(*popt)(x) + background(x)],
-            'fit_range': [(x_beg, x_end)]}
-
-
-def gauss_fit(dots):
-    """	Input:	dots - ruby spectrum data (n x 2 ndarray)
-        Return:	dict with r1, r2 and fit description
-        Descr.: Fit G&G-type "two gauss" function to dots"""
-
-    # LOAD PEAKS AND ESTIMATE BACKGROUND
-    estimated_background = estimate_background(dots)
-    background = estimated_background['background']
-    dots = estimated_background['corrected_dots']
-    peaks = peak_search(dots)[:2, :]
-
-    # ESTIMATE INITIAL GAUSSIAN PARAMETERS
-    si1, si2 = 0.35, 0.35
-    mu1, mu2 = peaks[0, 0], peaks[1, 0]
-    a1, a2 = peaks[0, 1], peaks[1, 1]
-    guess1, guess2 = (a1, mu1, si1), (a2, mu2, si2)
-
-    # CUT DATA TO FITTED SURROUNDING
-    x_beg1 = peaks[0, 0] - peakhunt_range
-    x_end1 = peaks[0, 0] + peakhunt_range
-    x_beg2 = peaks[1, 0] - peakhunt_range
-    x_end2 = peaks[1, 0] + peakhunt_range
-    dots1 = trim_to_range(dots, x_beg1, x_end1)
-    dots2 = trim_to_range(dots, x_beg2, x_end2)
-
-    # FIT THE GAUSS CURVES AND RETURN DATA
-    popt1, pcov1 = curve_fit(make_dependent_on_x(gauss), xdata=dots1[:, 0],
-                             ydata=dots1[:, 1], p0=guess1)
-    sigma1 = np.sqrt(np.diag(pcov1))
-    popt2, pcov2 = curve_fit(make_dependent_on_x(gauss), xdata=dots2[:, 0],
-                             ydata=dots2[:, 1], p0=guess2)
-    sigma2 = np.sqrt(np.diag(pcov2))
-
-    calculate_error(dots1, lambda x: gauss(*popt1)(x) + background(x))
-    calculate_error(dots2, lambda x: gauss(*popt2)(x) + background(x))
-
-    return {'r1_val': popt1[1],
-            'r1_unc': sigma1[1],
-            'r1_int': popt1[0] + background(popt1[1]),
-            'r2_val': popt2[1],
-            'r2_unc': sigma2[1],
-            'r2_int': popt2[0] + background(popt2[1]),
-            'fit_function':
-                [lambda x: gauss(*popt1)(x) + background(x),
-                 lambda x: gauss(*popt2)(x) + background(x)],
-            'fit_range': [(x_beg1, x_end1), (x_beg2, x_end2)]}
-
-
-if __name__ == '__main__':
-    pass
+# class CamelPeakhunt(TemplatePeakhunt):
+#     def __init__(self):
+#         super().__init__()
+#         self.id = 'camel_fit'
+#         self.name = 'Camel Fit'
+#         self.fit_range_multiplier = 2.0
+#
+#     def curve(self, a1, mu1, si1, a2, mu2, si2, a0, mu0, si0):
+#         return lambda x: gauss(a2, mu2, si2)(x) + gauss(a1, mu1, si1)(x) \
+#                          + gauss(a0, mu0, si0)(x)
+#
+#     @property
+#     def prediction(self):
+#         si1, si2, si0 = 0.35, 0.35, 1.0
+#         mu1, mu2, mu0 = self.r1_val, self.r2_val, (self.r1_val + self.r2_val)/2
+#         a1, a2, a0 = self.r1_int, self.r2_int, (self.r1_int + self.r2_int)/10
+#         return a1, mu1, si1, a2, mu2, si2, a0, mu0, si0

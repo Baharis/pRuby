@@ -7,7 +7,7 @@ import matplotlib.pyplot as pp
 import numpy as np
 import uncertainties as uc
 
-from methods import peakhunt_new as peakhunt
+from methods import peakhunt as peakhunt
 from methods import shifttop
 from methods import tempcorr
 from utility.cycle_generator import cycle_generator
