@@ -7,7 +7,7 @@ import matplotlib.pyplot as pp
 import numpy as np
 import uncertainties as uc
 
-from methods import peakhunt
+from methods import peakhunt_new as peakhunt
 from methods import shifttop
 from methods import tempcorr
 from utility.cycle_generator import cycle_generator
@@ -19,7 +19,7 @@ class Application(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        os.chdir(os.path.expanduser('~'))
+        os.chdir(os.path.expanduser('~/x/HP/ruby'))
 
         # SETTING CONSTANTS
         self.r1_ref = uc.ufloat(694.2, 0.1)
@@ -39,7 +39,7 @@ class Application(tk.Frame):
         self.shifttop_method = shifttop.default()
         self.tempcorr_method = tempcorr.default()
         self.method_peakhunt_stringvar = \
-            tk.StringVar(value=peakhunt.default().__name__)
+            tk.StringVar(value=peakhunt.default().id)
         self.method_shifttop_stringvar = \
             tk.StringVar(value=shifttop.default().__name__)
         self.method_tempcorr_stringvar = \
@@ -66,10 +66,10 @@ class Application(tk.Frame):
                                        variable=self.data_autodraw)
         self.menu_methods = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Methods", menu=self.menu_methods)
-        for key, m in self.peakhunt_methods.items():
+        for m in self.peakhunt_methods.values():
             self.menu_methods.add_radiobutton(
-                label=m['name'], variable=self.method_peakhunt_stringvar,
-                value=m['function'].__name__, command=self.methods_set)
+                label=m.name, variable=self.method_peakhunt_stringvar,
+                value=m.id, command=self.methods_set)
         self.menu_methods.add_separator()
         for key, m in self.tempcorr_methods.items():
             self.menu_methods.add_radiobutton(
@@ -119,16 +119,6 @@ class Application(tk.Frame):
         self.p1_entry.grid(row=3, column=1, columnspan=2)
         tk.Label(self, text='GPa').grid(row=3, column=3)
 
-    def calculate_p1(self, *_):
-        self.r1_sam = uc.ufloat_fromstr(self.r1_entry.get())
-        self.t_sam = uc.ufloat_fromstr(self.t_entry.get())
-        peakhunt_arguments = {'tempcorr_method': self.tempcorr_method,
-                              'shifttop_method': self.shifttop_method,
-                              'r1_sam': self.r1_sam, 't_sam': self.t_sam,
-                              'r1_ref': self.r1_ref, 't_ref': self.t_ref}
-        self.p1_sam = self.shifttop_method(**peakhunt_arguments)
-        self.p1_ufloatvar.set(value=self.p1_sam)
-
     @staticmethod
     def about():
         message = 'pRuby - pressure estimation based on ruby fluorescence ' \
@@ -136,6 +126,16 @@ class Application(tk.Frame):
                   'For details and help, visit pRuby page' \
                   '(https://github.com/Baharis/pRuby).'
         tkmb.showinfo(title='About pRuby', message=message)
+
+    def calculate_p1(self, *_):
+        self.r1_sam = uc.ufloat_fromstr(self.r1_entry.get())
+        self.t_sam = uc.ufloat_fromstr(self.t_entry.get())
+        arguments = {'tempcorr_method': self.tempcorr_method,
+                     'shifttop_method': self.shifttop_method,
+                     'r1_sam': self.r1_sam, 't_sam': self.t_sam,
+                     'r1_ref': self.r1_ref, 't_ref': self.t_ref}
+        self.p1_sam = self.shifttop_method(**arguments)
+        self.p1_ufloatvar.set(value=self.p1_sam)
 
     @staticmethod
     def cut_dots_to_690_710(dots):
@@ -188,8 +188,7 @@ class Application(tk.Frame):
 
         # DRAW ELEMENTS OF LAST PEAKHUNT AND FIT:
         # DOTS
-        label = self.filename_stringvar.get() + ', ' + \
-                self.method_peakhunt_stringvar.get()
+        label = self.filename_stringvar.get() + ', ' + self.peakhunt_method.name
         pp.plot(dots_x, dots_y, marker='.', color=active_color,
                 linestyle='None', label=label)
 
@@ -203,15 +202,15 @@ class Application(tk.Frame):
                     color=active_color, marker='v', markersize='8')
 
             # CURVES AND FILLS
-            for fit_function, fit_range in \
-                    zip(self.peakhunt_results['fit_function'],
-                        self.peakhunt_results['fit_range']):
+            fit_function = self.peakhunt_results['fit_function']
+            for fit_range in self.peakhunt_results['fit_range']:
                 curve_x = np.linspace(start=fit_range[0], stop=fit_range[1],
                                       num=int(100 * (fit_range[1] - fit_range[0])))
                 pp.plot(curve_x, fit_function(curve_x), linestyle='-',
                         color=active_color)
                 pp.fill_between(x=curve_x, y1=y_min, y2=fit_function(curve_x),
                                 color=active_color, alpha=0.1)
+            # TODO fix double fill
 
         # X-AXIS AND LEGEND
         ax = pp.gca()
@@ -224,7 +223,16 @@ class Application(tk.Frame):
 
     def data_fit(self):
         try:
-            self.peakhunt_results = self.peakhunt_method(self.dots)
+            fitter = self.peakhunt_method()
+            fitter.fit(self.dots)
+            self.peakhunt_results['r1_val'] = fitter.r1_val
+            self.peakhunt_results['r1_unc'] = fitter.r1_unc
+            self.peakhunt_results['r1_int'] = fitter.r1_int
+            self.peakhunt_results['r2_val'] = fitter.r2_val
+            self.peakhunt_results['r2_unc'] = fitter.r2_unc
+            self.peakhunt_results['r2_int'] = fitter.r2_int
+            self.peakhunt_results['fit_function'] = fitter.f
+            self.peakhunt_results['fit_range'] = fitter.areas
         except RuntimeError:
             tkmb.showerror(message='Data could not be fitted! '
                                    'Consider changing the peakhunt method.')
@@ -318,7 +326,7 @@ class Application(tk.Frame):
 
     def methods_set(self):
         self.peakhunt_method = \
-         self.peakhunt_methods[self.method_peakhunt_stringvar.get()]['function']
+         self.peakhunt_methods[self.method_peakhunt_stringvar.get()]
         self.shifttop_method = \
          self.shifttop_methods[self.method_shifttop_stringvar.get()]['function']
         self.tempcorr_method =\
