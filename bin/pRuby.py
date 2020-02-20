@@ -7,19 +7,23 @@ import matplotlib.pyplot as pp
 import numpy as np
 import uncertainties as uc
 
-from methods import peakhunt as peakhunt
-from methods import shifttop
-from methods import tempcorr
+from methods import backhunt, peakhunt, shifttop, tempcorr
 from utility.cycle_generator import cycle_generator
 import utility.tk_objects as tkob
-#test comment 3
 
 
 class Application(tk.Frame):
+    dots_low_limit = 690.0
+    dots_high_limit = 705.0
+
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         os.chdir(os.path.expanduser('~/x/HP/ruby'))
+        default_color_cycle = cycle_generator('r', 'g', 'b', 'c', 'm', 'y')
+        rainbow_color_cycle = cycle_generator('red', 'darkorange', 'gold',
+                                              'olivedrab', 'g', 'midnightblue',
+                                              'purple', 'magenta')
 
         # SETTING CONSTANTS
         self.r1_ref = uc.ufloat(694.2, 0.1)
@@ -29,21 +33,27 @@ class Application(tk.Frame):
         self.t_sam = self.t_ref
         self.p1_sam = self.p1_ref
         self.dots = None
+        self.dots_corrected = None
         self.data_autodraw = tk.BooleanVar(value=False)
         self.filenext = ''
         self.fileprevious = ''
-        self.fit_color_cycle = cycle_generator(('r', 'g', 'b', 'c', 'm', 'y'))
+        self.fit_color_cycle = default_color_cycle
         self.fit_successful = True
+        self.backhunt_results = {}
         self.peakhunt_results = {}
+        self.backhunt_method = backhunt.default()
         self.peakhunt_method = peakhunt.default()
         self.shifttop_method = shifttop.default()
         self.tempcorr_method = tempcorr.default()
+        self.method_backhunt_stringvar = \
+            tk.StringVar(value=backhunt.default().id)
         self.method_peakhunt_stringvar = \
             tk.StringVar(value=peakhunt.default().id)
         self.method_shifttop_stringvar = \
             tk.StringVar(value=shifttop.default().__name__)
         self.method_tempcorr_stringvar = \
             tk.StringVar(value=tempcorr.default().__name__)
+        self.backhunt_methods = backhunt.methods()
         self.peakhunt_methods = peakhunt.methods()
         self.shifttop_methods = shifttop.methods()
         self.tempcorr_methods = tempcorr.methods()
@@ -66,16 +76,30 @@ class Application(tk.Frame):
                                        variable=self.data_autodraw)
         self.menu_methods = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Methods", menu=self.menu_methods)
+
+        self.menu_methods.add_command(label='Background estimation',
+                                      state='disabled')
+        for m in self.backhunt_methods.values():
+            self.menu_methods.add_radiobutton(
+                label=m.name, variable=self.method_backhunt_stringvar,
+                value=m.id, command=self.methods_set)
+        self.menu_methods.add_separator()
+        self.menu_methods.add_command(label='Peak fitting',
+                                      state='disabled')
         for m in self.peakhunt_methods.values():
             self.menu_methods.add_radiobutton(
                 label=m.name, variable=self.method_peakhunt_stringvar,
                 value=m.id, command=self.methods_set)
         self.menu_methods.add_separator()
+        self.menu_methods.add_command(label='Temperature correction',
+                                      state='disabled')
         for key, m in self.tempcorr_methods.items():
             self.menu_methods.add_radiobutton(
                 label=m['name'], variable=self.method_tempcorr_stringvar,
                 value=m['function'].__name__, command=self.methods_set)
         self.menu_methods.add_separator()
+        self.menu_methods.add_command(label='Pressure determination',
+                                      state='disabled')
         for key, m in self.shifttop_methods.items():
             self.menu_methods.add_radiobutton(
                 label=m['name'], variable=self.method_shifttop_stringvar,
@@ -137,12 +161,11 @@ class Application(tk.Frame):
         self.p1_sam = self.shifttop_method(**arguments)
         self.p1_ufloatvar.set(value=self.p1_sam)
 
-    @staticmethod
-    def cut_dots_to_690_710(dots):
+    def trim_dots(self, dots):
         dots = dots[dots[:, 0].argsort()]
         new_dots = []
         for x, y in zip(dots[:, 0], dots[:, 1]):
-            if 690 <= x <= 710:
+            if self.dots_low_limit <= x <= self.dots_high_limit:
                 new_dots.append([x, y])
         return np.array(new_dots, dtype=(float, float))
 
@@ -171,19 +194,19 @@ class Application(tk.Frame):
             return
 
         # SET BASIC GEOMETRY AND STYLE
-        dots_x = self.dots[:, 0]
-        dots_y = self.dots[:, 1]
-        x_min = 690.0
-        x_max = 710.0
+        dots_x = self.dots_corrected[:, 0]
+        dots_y = self.dots_corrected[:, 1]
+        x_min = self.dots_low_limit
+        x_max = self.dots_high_limit
         x_span = x_max - x_min
         y_span = np.max(dots_y) - np.min(dots_y)
-        y_min = min(np.min(dots_y) - 0.01 * y_span, 0)
+        y_min = 0.0  # min(np.min(dots_y) - 0.01 * y_span, 0)
         y_max = np.max(dots_y) + 0.20 * y_span
         active_color = next(self.fit_color_cycle)
         pp.minorticks_on()
         pp.grid(b=True, which='major', color='gray', alpha=0.2)
-        pp.grid(b=True, axis='x', which='minor', color='gray', alpha=0.1)
-        pp.grid(b=True, axis='y', which='major', color='gray', alpha=0.1)
+        pp.grid(b=True, axis='x', which='minor', color='gray', alpha=0.2)
+        pp.grid(b=True, axis='y', which='major', color='gray', alpha=0.2)
         pp.tick_params(axis='x', which='minor', bottom='on')
 
         # DRAW ELEMENTS OF LAST PEAKHUNT AND FIT:
@@ -201,11 +224,21 @@ class Application(tk.Frame):
                     self.peakhunt_results['r2_int'],
                     color=active_color, marker='v', markersize='8')
 
-            # CURVES AND FILLS
+            # BACKFIT CURVES AND FILLS
+            bg_function = lambda x: -self.backhunt_results['fit_function'](x)
+            for fit_range in self.backhunt_results['fit_range']:
+                curve_x = np.linspace(start=fit_range[0], stop=fit_range[1],
+                                      num=int(100*(fit_range[1]-fit_range[0])))
+                pp.plot(curve_x, bg_function(curve_x), linestyle='--',
+                        color=active_color, alpha=0.5)
+                pp.fill_between(x=curve_x, y1=bg_function(curve_x), y2=y_min,
+                            color=active_color, alpha=0.1)
+
+            # PEAKFIT CURVES AND FILLS
             fit_function = self.peakhunt_results['fit_function']
             for fit_range in self.peakhunt_results['fit_range']:
                 curve_x = np.linspace(start=fit_range[0], stop=fit_range[1],
-                                      num=int(100 * (fit_range[1] - fit_range[0])))
+                                      num=int(100*(fit_range[1]-fit_range[0])))
                 pp.plot(curve_x, fit_function(curve_x), linestyle='-',
                         color=active_color)
                 pp.fill_between(x=curve_x, y1=y_min, y2=fit_function(curve_x),
@@ -221,10 +254,27 @@ class Application(tk.Frame):
         pp.legend()
         pp.show()
 
+    def background_fit(self):
+        try:
+            fitter = self.backhunt_method()
+            fitter.fit(self.dots)
+            self.backhunt_results['fit_function'] = fitter.f
+            self.backhunt_results['fit_range'] = fitter.areas
+        except RuntimeError:
+            tkmb.showerror(message='Background could not be fitted! '
+                                   'Consider changing the backhunt method.')
+            self.fit_successful = False
+        else:
+            self.fit_successful = True
+        new_dots = list()
+        for x, y in self.dots:
+            new_dots.append((x, y - self.backhunt_results['fit_function'](x)))
+        self.dots_corrected = np.array(new_dots, dtype=(float, float))
+
     def data_fit(self):
         try:
             fitter = self.peakhunt_method()
-            fitter.fit(self.dots)
+            fitter.fit(self.dots_corrected)
             self.peakhunt_results['r1_val'] = fitter.r1_val
             self.peakhunt_results['r1_unc'] = fitter.r1_unc
             self.peakhunt_results['r1_int'] = fitter.r1_int
@@ -275,7 +325,8 @@ class Application(tk.Frame):
         except FileNotFoundError:
             pass
         self.file_list()
-        self.dots = self.cut_dots_to_690_710(dots=dots)
+        self.dots = self.trim_dots(dots=dots)
+        self.background_fit()
         self.data_fit()
         self.calculate_p1()
         if self.data_autodraw.get() is True:
@@ -325,6 +376,8 @@ class Application(tk.Frame):
         self.file_change(self.fileprevious)
 
     def methods_set(self):
+        self.backhunt_method = \
+         self.backhunt_methods[self.method_backhunt_stringvar.get()]
         self.peakhunt_method = \
          self.peakhunt_methods[self.method_peakhunt_stringvar.get()]
         self.shifttop_method = \
@@ -332,6 +385,7 @@ class Application(tk.Frame):
         self.tempcorr_method =\
          self.tempcorr_methods[self.method_tempcorr_stringvar.get()]['function']
         if self.dots is not None:
+            self.background_fit()
             self.data_fit()
         if self.data_autodraw.get() is True:
             self.data_draw()

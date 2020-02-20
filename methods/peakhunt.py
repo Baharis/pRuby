@@ -4,11 +4,10 @@ from scipy.signal import find_peaks_cwt
 from scipy.optimize import curve_fit, minimize_scalar
 
 fit_range = 0.40
-# TODO add background subtraction deinitely
 
 
 def default():
-    return GaussPeakhunt
+    return PseudovoigtPeakhunt
 
 
 def methods():
@@ -53,7 +52,20 @@ class TemplatePeakhunt:
         x_end1 = self.r2_val + fit_range * self.fit_range_multiplier
         x_beg2 = self.r1_val - fit_range * self.fit_range_multiplier
         x_end2 = self.r1_val + fit_range * self.fit_range_multiplier
-        return (x_beg1, x_end1), (x_beg2, x_end2)
+        return self.merge_areas((x_beg1, x_end1), (x_beg2, x_end2))
+
+    @staticmethod
+    def merge_areas(*areas):
+        areas = [list(area) for area in areas]
+        sorted_areas = sorted(areas, key=lambda x: x[0])  # sort all areas
+        merged_areas = [sorted_areas.pop(0)]  # pop first to merged
+        for area in sorted_areas:
+            if area[0] <= merged_areas[-1][1]:  # if interlaps with last sorted
+                merged_areas[-1][1] = max(merged_areas[-1][1], area[1])  # merge
+            else:
+                merged_areas.append(area)
+        merged_areas = [tuple(area) for area in merged_areas]
+        return merged_areas
 
     @property
     def mse(self):
