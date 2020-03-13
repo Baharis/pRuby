@@ -2,16 +2,24 @@ import numpy as np
 from collections import OrderedDict
 from scipy.signal import find_peaks_cwt
 from scipy.optimize import curve_fit, minimize_scalar
+from .base import RoutineManager
 
-fit_range = 0.40
 
-
+# TODO get rid of this for the method default of menager
 def default():
-    return PseudovoigtPeakhunt
+    return PseudovoigtPeakHuntingMethod
 
 
+
+
+
+class PeakHuntingRoutineManager(RoutineManager):
+    pass
+
+
+# TODO remove this and make routines subscribe themselves
 def methods():
-    peakhunts = GaussPeakhunt, GausslorentzPeakhunt, PseudovoigtPeakhunt
+    peakhunts = GaussPeakHuntingMethod, GausslorentzPeakHuntingMethod, PseudovoigtPeakHuntingMethod
     dict_of_methods = OrderedDict()
     for ph in peakhunts:
         dict_of_methods[ph.id] = ph
@@ -32,52 +40,19 @@ def lorentz(a, mu, ga):
     return lambda x: (a * ga ** 2) / ((x - mu) ** 2 + ga ** 2)
 
 
-class TemplatePeakhunt:
-    fit_range_multiplier = 1.0
+class TemplatePeakHuntingMethod:
 
-    def __init__(self):
+    def __init__(self, spectrum):
         self.f = lambda x: 0.0
-        self.r1_int = float()
-        self.r1_val = float()
-        self.r1_unc = float()
-        self.r2_int = float()
-        self.r2_val = float()
-        self.r2_unc = float()
-        self.x = np.array(list(tuple()))
-        self.y = np.array(list(tuple()))
+        self.fit_radius = 0.40
 
     @property
-    def areas(self):
-        x_beg1 = self.r2_val - fit_range * self.fit_range_multiplier
-        x_end1 = self.r2_val + fit_range * self.fit_range_multiplier
-        x_beg2 = self.r1_val - fit_range * self.fit_range_multiplier
-        x_end2 = self.r1_val + fit_range * self.fit_range_multiplier
-        return self.merge_areas((x_beg1, x_end1), (x_beg2, x_end2))
-
-    @staticmethod
-    def merge_areas(*areas):
-        areas = [list(area) for area in areas]
-        sorted_areas = sorted(areas, key=lambda x: x[0])  # sort all areas
-        merged_areas = [sorted_areas.pop(0)]  # pop first to merged
-        for area in sorted_areas:
-            if area[0] <= merged_areas[-1][1]:  # if interlaps with last sorted
-                merged_areas[-1][1] = max(merged_areas[-1][1], area[1])  # merge
-            else:
-                merged_areas.append(area)
-        merged_areas = [tuple(area) for area in merged_areas]
-        return merged_areas
-
-    @property
-    def mse(self):
-        e2_sum = sum([(y - self.f(x)) ** 2 for x, y in zip(self.x, self.y)])
-        return e2_sum / len(self.x)
-
-    def curve(self, *_):
-        return lambda x: 0.0
-
-    @property
-    def curve_dependent_on_x(self):
-        return lambda x, *args: self.curve(*args)(x)
+    def fit_area(self):
+        segment_around_r2 = Segment(self.r2.position - self.fit_radius,
+                                    self.r2.position + self.fit_radius)
+        segment_around_r1 = Segment(self.r1.position - self.fit_radius,
+                                    self.r1.position + self.fit_radius)
+        return segment_around_r2 + segment_around_r1
 
     def find_peak_candidates(self):
         peak_indexes = find_peaks_cwt(vector=self.y, widths=[5, 5, 5, 5, 5])
@@ -88,15 +63,11 @@ class TemplatePeakhunt:
         if second_not_found or second_out_of_range:
             peaks = np.array(((peaks[0, 0], peaks[0, 1]),
                               (peaks[0, 0] - 1.5, 0.5 * peaks[0, 1])))
-        self.r1_val = peaks[0, 0]
-        self.r1_unc = 1.0
-        self.r1_int = peaks[0, 1]
-        self.r2_val = peaks[1, 0]
-        self.r2_unc = 1.0
-        self.r2_int = peaks[1, 1]
+        self.r1 = SpectrumPeak(position=peaks[0, 0], height=peaks[0, 1])
+        self.r2 = SpectrumPeak(position=peaks[1, 0], height=peaks[1, 1])
 
     def fit(self, dots):
-        self.import_dots(dots=dots)
+        self.update_spectrum(dots=dots)
         self.find_peak_candidates()
         self.trim_dots_to_areas()
         one_over_y = [1/max(abs(y), 1e-9) for y in self.y]
@@ -110,9 +81,9 @@ class TemplatePeakhunt:
         self.update_r1_and_r2_horizontal(popt, sigma)
         self.update_r1_and_r2_vertical()
 
-    def import_dots(self, dots):
-        self.x = np.array(dots[:, 0])
-        self.y = np.array(dots[:, 1])
+    def update_spectrum(self, dots):
+        self.spectrum.x = np.array(dots[:, 0])
+        self.spectrum.y = np.array(dots[:, 1])
 
     @property
     def peak_broadening(self):
@@ -122,28 +93,11 @@ class TemplatePeakhunt:
     def prediction(self):
         return tuple()
 
-    def trim_dots_to_areas(self):
-        indices_in_area = np.zeros(len(self.x), dtype=bool)
-        for area in self.areas:
-            left, right = area
-            for i, x in enumerate(self.x):
-                if left <= x <= right:
-                    indices_in_area[i] = True
-        self.x = self.x[indices_in_area]
-        self.y = self.y[indices_in_area]
-
     def update_function(self, popt):
         self.f = lambda x: self.curve(*popt)(x)
 
-    def update_r1_and_r2_horizontal(self, popt, sigma):
-        pass
 
-    def update_r1_and_r2_vertical(self):
-        self.r1_int = self.f(self.r1_val)
-        self.r2_int = self.f(self.r2_val)
-
-
-class GaussPeakhunt(TemplatePeakhunt):
+class GaussPeakHuntingMethod(TemplatePeakHuntingMethod):
     id = 'gauss_fit'
     name = 'Gauss Fit'
     fit_range_multiplier = 1.0
@@ -168,7 +122,7 @@ class GaussPeakhunt(TemplatePeakhunt):
         self.r2_unc = sigma[4]
 
 
-class GausslorentzPeakhunt(TemplatePeakhunt):
+class GausslorentzPeakHuntingMethod(TemplatePeakHuntingMethod):
     id = 'gausslorentz_fit'
     name = 'Gauss-Lorentz Fit'
     fit_range_multiplier = 3.0
@@ -198,7 +152,7 @@ class GausslorentzPeakhunt(TemplatePeakhunt):
         self.r2_unc = sigma[6]
 
 
-class PseudovoigtPeakhunt(TemplatePeakhunt):
+class PseudovoigtPeakHuntingMethod(TemplatePeakHuntingMethod):
     id = 'pseudovoigt_fit'
     name = 'Pseudo-Voigt Fit'
     fit_range_multiplier = 3.0
@@ -249,3 +203,4 @@ class PseudovoigtPeakhunt(TemplatePeakhunt):
 #         mu1, mu2, mu0 = self.r1_val, self.r2_val, (self.r1_val + self.r2_val)/2
 #         a1, a2, a0 = self.r1_int, self.r2_int, (self.r1_int + self.r2_int)/10
 #         return a1, mu1, si1, a2, mu2, si2, a0, mu0, si0
+

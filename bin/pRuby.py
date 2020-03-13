@@ -7,7 +7,7 @@ import matplotlib.pyplot as pp
 import numpy as np
 import uncertainties as uc
 
-from methods import backhunt, peakhunt, shifttop, tempcorr
+from routines import backhunt, peakhunt, shifttop, tempcorr
 from utility.cycle_generator import cycle_generator
 import utility.tk_objects as tkob
 
@@ -172,6 +172,7 @@ class Application(tk.Frame):
     @staticmethod
     def _parse_txt(path):
         return np.loadtxt(path, dtype=(float, float))
+        # TODO remove - already moved to reading routines
 
     @staticmethod
     def _parse_other(path):
@@ -186,6 +187,7 @@ class Application(tk.Frame):
             else:
                 dots.append([x, y])
         return np.array(dots, dtype=(float, float))
+        # TODO remove - already moved to reading routines
 
     def data_draw(self):
         # RETURN IF NO FILE HAS BEEN IMPORTED YET
@@ -259,7 +261,7 @@ class Application(tk.Frame):
             fitter = self.backhunt_method()
             fitter.fit(self.dots)
             self.backhunt_results['fit_function'] = fitter.f
-            self.backhunt_results['fit_range'] = fitter.areas
+            self.backhunt_results['fit_range'] = fitter.fit_area
         except RuntimeError:
             tkmb.showerror(message='Background could not be fitted! '
                                    'Consider changing the backhunt method.')
@@ -282,7 +284,7 @@ class Application(tk.Frame):
             self.peakhunt_results['r2_unc'] = fitter.r2_unc
             self.peakhunt_results['r2_int'] = fitter.r2_int
             self.peakhunt_results['fit_function'] = fitter.f
-            self.peakhunt_results['fit_range'] = fitter.areas
+            self.peakhunt_results['fit_range'] = fitter.fit_area
         except RuntimeError:
             tkmb.showerror(message='Data could not be fitted! '
                                    'Consider changing the peakhunt method.')
