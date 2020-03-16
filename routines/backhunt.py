@@ -1,6 +1,7 @@
 import numpy as np
 from collections import OrderedDict
 from scipy.optimize import curve_fit
+from ..utility.maths import *
 
 
 def default():
@@ -14,14 +15,6 @@ def methods():
     for bh in backhunts:
         dict_of_methods[bh.id] = bh
     return dict_of_methods
-
-
-def linear(a, b):
-    return lambda x: a * x + b
-
-
-def cubic(a3, a2, a1, a0):
-    return lambda x: a3 * x ** 3 + a2 * x **2 + a1 * x + a0
 
 
 class TemplateBackhunt:

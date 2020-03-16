@@ -3,6 +3,7 @@ from collections import OrderedDict
 from scipy.signal import find_peaks_cwt
 from scipy.optimize import curve_fit, minimize_scalar
 from .base import RoutineManager
+from ..utility.maths import *
 
 
 # TODO get rid of this for the method default of menager
@@ -24,20 +25,6 @@ def methods():
     for ph in peakhunts:
         dict_of_methods[ph.id] = ph
     return dict_of_methods
-
-
-def gauss(a, mu, si):
-    """	Input:  a, mu, si - gaussian coeffitients               (float)
-        Return:	gauss function of an 'x' parameter              (float)
-        Descr.: Produce G(x)-type function with fixed parameters"""
-    return lambda x: a * np.exp(-(x - mu) ** 2 / (2. * si ** 2))
-
-
-def lorentz(a, mu, ga):
-    """	Input: x - value and a=I, mu=x_0, ga - lorentz f. coeffitients  (float)
-        Return:	value of function with desired parameters in x (float)
-        Descr.: Calculate L-type function for given x and parameters"""
-    return lambda x: (a * ga ** 2) / ((x - mu) ** 2 + ga ** 2)
 
 
 class TemplatePeakHuntingMethod:
