@@ -1,26 +1,28 @@
 import numpy as np
 from .base import RoutineManager
 from pruby.spectrum import Spectrum
+from utility.line_subset import LineSubset
 
-file_reading_routine_manager = RoutineManager()
+
+reading_routine_manager = RoutineManager()
 
 
-class RawTxtReadingRoutine:
-    name = 'Raw text file'
+class TemplateReadingRoutine:
+    limits = LineSubset(690.0, 705.0)
 
-    def __init__(self):
-        self.spectrum = Spectrum()
+
+class RawTxtReadingRoutine(TemplateReadingRoutine):
+    name = 'Raw_txt'
 
     def read(self, filepath):
         raw_data = np.loadtxt(filepath, dtype=(float, float))
-        self.spectrum = Spectrum(x=raw_data[:, 0], y=raw_data[:, 1])
+        raw_spectrum = Spectrum(x=raw_data[:, 0], y=raw_data[:, 1])
+        raw_spectrum.trim(limits=self.limits)
+        return raw_spectrum
 
 
-class MetaTxtReadingRoutine:
-    name = 'Text file with metadata'
-
-    def __init__(self):
-        self.spectrum = Spectrum()
+class MetaTxtReadingRoutine(TemplateReadingRoutine):
+    name = 'Meta_txt'
 
     def read(self, filepath):
         with open(filepath, "r") as file:
@@ -35,8 +37,10 @@ class MetaTxtReadingRoutine:
                 else:
                     x_list.append(new_x)
                     y_list.append(new_y)
-        self.spectrum = Spectrum(x=x_list, y=y_list)
+        raw_spectrum = Spectrum(x=x_list, y=y_list)
+        raw_spectrum.trim(limits=self.limits)
+        return raw_spectrum
 
 
-file_reading_routine_manager.subscribe(RawTxtReadingRoutine())
-file_reading_routine_manager.subscribe(MetaTxtReadingRoutine())
+reading_routine_manager.subscribe(RawTxtReadingRoutine())
+reading_routine_manager.subscribe(MetaTxtReadingRoutine())
