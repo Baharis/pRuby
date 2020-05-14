@@ -1,11 +1,8 @@
 import numpy as np
-from .base import RoutineManager
 from pruby.spectrum import Spectrum, Curve
 from pruby.utility import LineSubset, cycle
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-
-drawing_routine_manager = RoutineManager()
 
 
 class TemplateDrawingRoutine:
@@ -80,11 +77,6 @@ class SimpleDrawingRoutine(TemplateDrawingRoutine):
                          xytext=(10, - 3 - mpl.rcParams['xtick.major.pad']),
                          xycoords='axes fraction', textcoords='offset points')
         self.draw_finalize()
-
-
-drawing_routine_manager.subscribe(TraditionalDrawingRoutine())
-drawing_routine_manager.subscribe(SimpleDrawingRoutine())
-
 
 # So seemingly the application breaks if matplotlib objects are created before
 # the tk object. Most likely a default root of mpl is made before explicit root

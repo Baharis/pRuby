@@ -1,5 +1,4 @@
 from uncertainties import ufloat
-from .base import RoutineManager
 from ..utility.maths import polynomial
 from ..constants import T_0
 
@@ -99,13 +98,3 @@ class NoneCorrectionRoutine(TemplateCorrectionRoutine):
     @property
     def correction(self):
         return ufloat(0.0, 0.0)
-
-
-correcting_routine_manager = RoutineManager()
-# correcting_routine_manager.subscribe(VosR12CorrectionRoutine)
-correcting_routine_manager.subscribe(VosR1CorrectionRoutine)
-# correcting_routine_manager.subscribe(VosR2CorrectionRoutine)
-# correcting_routine_manager.subscribe(RaganR12CorrectionRoutine)
-correcting_routine_manager.subscribe(RaganR1CorrectionRoutine)
-# correcting_routine_manager.subscribe(RaganR2CorrectionRoutine)
-correcting_routine_manager.subscribe(NoneCorrectionRoutine)

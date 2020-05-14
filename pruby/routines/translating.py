@@ -1,5 +1,4 @@
 from uncertainties import ufloat
-from .base import RoutineManager
 from ..constants import R1_0, R2_0, T_0
 
 
@@ -68,10 +67,3 @@ class WeiTranslationRoutine(TemplateTranslationRoutine):
         b = b300 + b1 * dt + b2 * dt ** 2
         la_t = la300 + la1 * dt
         return (a / b) * (pow(self.r1_uncorrected / la_t, b) - 1.0)
-
-
-translating_routine_manager = RoutineManager()
-translating_routine_manager.subscribe(LiuTranslationRoutine)
-translating_routine_manager.subscribe(WeiTranslationRoutine)
-translating_routine_manager.subscribe(MaoTranslationRoutine)
-translating_routine_manager.subscribe(PiermariniTranslationRoutine)

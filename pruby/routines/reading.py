@@ -1,10 +1,6 @@
 import numpy as np
-from .base import RoutineManager
 from pruby.spectrum import Spectrum
 from pruby.utility.line_subset import LineSubset
-
-
-reading_routine_manager = RoutineManager()
 
 
 class TemplateReadingRoutine:
@@ -38,7 +34,3 @@ class MetaTxtReadingRoutine(TemplateReadingRoutine):
                     y_list.append(new_y)
         raw_spectrum = Spectrum(x=x_list, y=y_list)
         return raw_spectrum.within(self.limits)
-
-
-reading_routine_manager.subscribe(RawTxtReadingRoutine())
-reading_routine_manager.subscribe(MetaTxtReadingRoutine())

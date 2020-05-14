@@ -8,12 +8,7 @@ import numpy as np
 import uncertainties as uc
 from natsort import natsorted
 
-from pruby.routines.reading import reading_routine_manager
-from pruby.routines.fitting import backfitting_routine_manager
-from pruby.routines.fitting import peakfitting_routine_manager
-from pruby.routines.correcting import correcting_routine_manager
-from pruby.routines.translating import translating_routine_manager
-from pruby.routines.drawing import drawing_routine_manager
+from pruby.routines.manager import routine_manager
 from pruby.constants import R1_0, R2_0, T_0, P_0
 from pruby.calculator import PressureCalculator
 import pruby.utility.tk_objects as tkob
@@ -34,18 +29,18 @@ class Application(tk.Frame):
         self.calculator = PressureCalculator()
 
         # method string variables
-        self.reading_routine = tk.StringVar()
-        self.reading_routine.set(reading_routine_manager.default.name)
-        self.backfitting_routine = tk.StringVar()
-        self.backfitting_routine.set(backfitting_routine_manager.default.name)
-        self.peakfitting_routine = tk.StringVar()
-        self.peakfitting_routine.set(peakfitting_routine_manager.default.name)
-        self.correcting_routine = tk.StringVar()
-        self.correcting_routine.set(correcting_routine_manager.default.name)
-        self.translating_routine = tk.StringVar()
-        self.translating_routine.set(translating_routine_manager.default.name)
-        self.drawing_routine = tk.StringVar()
-        self.drawing_routine.set(drawing_routine_manager.default.name)
+        self.reading_routine = tk.StringVar(
+            value=routine_manager.default['reading'].name)
+        self.backfitting_routine = tk.StringVar(
+            value=routine_manager.default['backfitting'].name)
+        self.peakfitting_routine = tk.StringVar(
+            value=routine_manager.default['peakfitting'].name)
+        self.correcting_routine = tk.StringVar(
+            value=routine_manager.default['correcting'].name)
+        self.translating_routine = tk.StringVar(
+            value=routine_manager.default['translating'].name)
+        self.drawing_routine = tk.StringVar(
+            value=routine_manager.default['drawing'].name)
 
         # BUILDING TOP MENU
         self.menu = tk.Menu(self)
@@ -62,31 +57,20 @@ class Application(tk.Frame):
 
         self.menu_methods = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Methods", menu=self.menu_methods)
-        self.menu_methods.add_command(label='Reading', state='disabled')
-        for m in reading_routine_manager.list:
-            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
-                                              variable=self.reading_routine, command=self.set_methods)
-        self.menu_methods.add_command(label='Background', state='disabled')
-        for m in backfitting_routine_manager.list:
-            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
-                                              variable=self.backfitting_routine, command=self.set_methods)
-        self.menu_methods.add_command(label='Spectrum', state='disabled')
-        for m in peakfitting_routine_manager.list:
-            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
-                                              variable=self.peakfitting_routine, command=self.set_methods)
-        self.menu_methods.add_command(label='Temperature correction', state='disabled')
-        for m in correcting_routine_manager.list:
-            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
-                                              variable=self.correcting_routine, command=self.set_methods)
-        self.menu_methods.add_command(label='Pressure determination', state='disabled')
-        for m in translating_routine_manager.list:
-            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
-                                              variable=self.translating_routine, command=self.set_methods)
-        self.menu_methods.add_command(label='Drawing style', state='disabled')
-        for m in drawing_routine_manager.list:
-            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
-                                              variable=self.drawing_routine, command=self.set_methods)
-        # self.menu_methods.add_separator() add separators if necessary
+
+        def make_methods_submenu(role, label):
+            self.menu_methods.add_command(label=label, state='disabled')
+            for m in routine_manager.names[role]:
+                self.menu_methods.add_radiobutton(label=m, value=m,
+                    variable=getattr(self, role+'_routine'),
+                    command=self.set_methods)
+            # self.menu_methods.add_separator() add separators if necessary
+        make_methods_submenu('reading', 'Reading')
+        make_methods_submenu('backfitting', 'Background fitting')
+        make_methods_submenu('peakfitting', 'Spectrum fitting')
+        make_methods_submenu('correcting', 'Temperature correction')
+        make_methods_submenu('translating', 'Pressure determination')
+        make_methods_submenu('drawing', 'Drawing style')
         self.menu.add_command(label='?', command=self.show_about)
 
         # ENTRY AREA - file

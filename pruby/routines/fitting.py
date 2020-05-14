@@ -2,7 +2,6 @@ import numpy as np
 from scipy.optimize import curve_fit as scipy_fit
 from scipy.signal import find_peaks_cwt
 from uncertainties import ufloat
-from .base import RoutineManager
 from ..utility.maths import polynomial, gaussian, lorentzian
 from pruby.spectrum import Spectrum, Curve
 from pruby.utility.line_subset import LineSubset
@@ -216,13 +215,3 @@ class CamelPeakFittingRoutine(TemplatePeakFittingRoutine):
     @property
     def r2(self):
         return self.tuple_from_curve_arguments(x_arg=4, y_arg=3)
-
-
-backfitting_routine_manager = RoutineManager()
-backfitting_routine_manager.subscribe(HuberBackFittingRoutine)
-backfitting_routine_manager.subscribe(SateliteBackFittingRoutine)
-
-peakfitting_routine_manager = RoutineManager()
-peakfitting_routine_manager.subscribe(GaussianPeakFittingRoutine)
-peakfitting_routine_manager.subscribe(PseudovoigtPeakFittingRoutine)
-peakfitting_routine_manager.subscribe(CamelPeakFittingRoutine)
