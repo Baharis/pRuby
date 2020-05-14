@@ -1,9 +1,7 @@
 from uncertainties import ufloat
 from .base import RoutineManager
 from ..utility.maths import polynomial
-
-
-T_ZERO_POINT = ufloat(298.15, 0.0)
+from ..constants import T_0
 
 
 def to_wavelength(wavenumber):
@@ -29,8 +27,11 @@ def vos_r2_shift(t):
 
 class TemplateCorrectionRoutine:
     def __init__(self):
-        self.correction = None
-        self.t = T_ZERO_POINT
+        self.t = T_0
+
+    @property
+    def correction(self):
+        return 0.0
 
     def correct(self, temperature):
         self.t = temperature
@@ -39,7 +40,7 @@ class TemplateCorrectionRoutine:
 
 class VosR1CorrectionRoutine(TemplateCorrectionRoutine):
     """Based on doi:10.1063/1.348903"""
-    name = 'Vos_R1'  # (1991)
+    name = 'Vos R1'  # (1991)
 
     @property
     def correction(self):
@@ -48,7 +49,7 @@ class VosR1CorrectionRoutine(TemplateCorrectionRoutine):
 
 class VosR2CorrectionRoutine(TemplateCorrectionRoutine):
     """Based on doi:10.1063/1.348903"""
-    name = 'Vos_R2'  # (1991)
+    name = 'Vos R2'  # (1991)
 
     @property
     def correction(self):
@@ -57,7 +58,7 @@ class VosR2CorrectionRoutine(TemplateCorrectionRoutine):
 
 class VosR12CorrectionRoutine(TemplateCorrectionRoutine):
     """Based on doi:10.1063/1.348903"""
-    name = 'Vos_average'  # (1991)
+    name = 'Vos average'  # (1991)
 
     @property
     def correction(self):
@@ -66,30 +67,30 @@ class VosR12CorrectionRoutine(TemplateCorrectionRoutine):
 
 class RaganR1CorrectionRoutine(TemplateCorrectionRoutine):
     """Based on doi:10.1063/1.351951"""
-    name = 'Ragan_R1'  # (1992)
+    name = 'Ragan R1'  # (1992)
 
     @property
     def correction(self):
-        return ragan_r1_position(T_ZERO_POINT) - ragan_r1_position(self.t)
+        return ragan_r1_position(T_0) - ragan_r1_position(self.t)
 
 
 class RaganR2CorrectionRoutine(TemplateCorrectionRoutine):
     """Based on doi:10.1063/1.351951"""
-    name = 'Ragan_R2'  # (1992)
+    name = 'Ragan R2'  # (1992)
 
     @property
     def correction(self):
-        return ragan_r2_position(T_ZERO_POINT) - ragan_r2_position(self.t)
+        return ragan_r2_position(T_0) - ragan_r2_position(self.t)
 
 
 class RaganR12CorrectionRoutine(TemplateCorrectionRoutine):
     """Based on doi:10.1063/1.351951"""
-    name = 'Ragan_average'  # (1992)
+    name = 'Ragan average'  # (1992)
 
     @property
     def correction(self):
-        return (ragan_r1_position(T_ZERO_POINT) - ragan_r1_position(self.t) +
-                ragan_r2_position(T_ZERO_POINT) - ragan_r2_position(self.t)) / 2
+        return (ragan_r1_position(T_0) - ragan_r1_position(self.t) +
+                ragan_r2_position(T_0) - ragan_r2_position(self.t)) / 2
 
 
 class NoneCorrectionRoutine(TemplateCorrectionRoutine):
@@ -101,10 +102,10 @@ class NoneCorrectionRoutine(TemplateCorrectionRoutine):
 
 
 correcting_routine_manager = RoutineManager()
-correcting_routine_manager.subscribe(VosR12CorrectionRoutine)
+# correcting_routine_manager.subscribe(VosR12CorrectionRoutine)
 correcting_routine_manager.subscribe(VosR1CorrectionRoutine)
-correcting_routine_manager.subscribe(VosR2CorrectionRoutine)
-correcting_routine_manager.subscribe(RaganR12CorrectionRoutine)
+# correcting_routine_manager.subscribe(VosR2CorrectionRoutine)
+# correcting_routine_manager.subscribe(RaganR12CorrectionRoutine)
 correcting_routine_manager.subscribe(RaganR1CorrectionRoutine)
-correcting_routine_manager.subscribe(RaganR2CorrectionRoutine)
+# correcting_routine_manager.subscribe(RaganR2CorrectionRoutine)
 correcting_routine_manager.subscribe(NoneCorrectionRoutine)

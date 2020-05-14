@@ -1,5 +1,5 @@
 import unittest
-from utility.line_subset import LineSubset
+from pruby.utility.line_subset import LineSubset
 
 
 class TestLineSubset(unittest.TestCase):

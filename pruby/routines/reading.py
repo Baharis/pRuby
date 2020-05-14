@@ -1,7 +1,7 @@
 import numpy as np
 from .base import RoutineManager
 from pruby.spectrum import Spectrum
-from utility.line_subset import LineSubset
+from pruby.utility.line_subset import LineSubset
 
 
 reading_routine_manager = RoutineManager()
@@ -12,17 +12,16 @@ class TemplateReadingRoutine:
 
 
 class RawTxtReadingRoutine(TemplateReadingRoutine):
-    name = 'Raw_txt'
+    name = 'Raw txt'
 
     def read(self, filepath):
         raw_data = np.loadtxt(filepath, dtype=(float, float))
         raw_spectrum = Spectrum(x=raw_data[:, 0], y=raw_data[:, 1])
-        raw_spectrum.trim(limits=self.limits)
-        return raw_spectrum
+        return raw_spectrum.within(self.limits)
 
 
 class MetaTxtReadingRoutine(TemplateReadingRoutine):
-    name = 'Meta_txt'
+    name = 'Metadata txt'
 
     def read(self, filepath):
         with open(filepath, "r") as file:
@@ -38,8 +37,7 @@ class MetaTxtReadingRoutine(TemplateReadingRoutine):
                     x_list.append(new_x)
                     y_list.append(new_y)
         raw_spectrum = Spectrum(x=x_list, y=y_list)
-        raw_spectrum.trim(limits=self.limits)
-        return raw_spectrum
+        return raw_spectrum.within(self.limits)
 
 
 reading_routine_manager.subscribe(RawTxtReadingRoutine())

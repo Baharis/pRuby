@@ -1,23 +1,22 @@
 from uncertainties import ufloat
 from .base import RoutineManager
-
-
-R1_ZERO_POINT = ufloat(694.24, 0.0)
-R2_ZERO_POINT = ufloat(692.75, 0.0)
-T_ZERO_POINT = ufloat(298.15, 0.0)
+from ..constants import R1_0, R2_0, T_0
 
 
 def mao_function(r1, a, b):
     """Based on doi:10.1063/1.325277"""
-    return (a / b) * (((r1 / R1_ZERO_POINT) ** b) - 1)
+    return (a / b) * (((r1 / R1_0) ** b) - 1)
 
 
 class TemplateTranslationRoutine:
     def __init__(self):
-        self.pressure = None
-        self.r1_corrected, self.r1_uncorrected = R1_ZERO_POINT, R1_ZERO_POINT
-        self.r2_corrected, self.r2_uncorrected = R2_ZERO_POINT, R2_ZERO_POINT
-        self.temperature = T_ZERO_POINT
+        self.r1_corrected, self.r1_uncorrected = R1_0, R1_0
+        self.r2_corrected, self.r2_uncorrected = R2_0, R2_0
+        self.temperature = T_0
+
+    @property
+    def pressure(self):
+        return 0.0
 
     def translate(self, r1, r2, correction, temperature):
         self.r1_uncorrected, self.r1_corrected = r1, r1 + correction
@@ -48,7 +47,7 @@ class PiermariniTranslationRoutine(TemplateTranslationRoutine):
 
     @property
     def pressure(self):
-        return 0.1 * ufloat(2.740, 0.016) * (self.r1_corrected - R1_ZERO_POINT)
+        return ufloat(2.740, 0.016) * (self.r1_corrected - R1_0)
 
 
 class WeiTranslationRoutine(TemplateTranslationRoutine):

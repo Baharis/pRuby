@@ -1,7 +1,7 @@
 import tkinter as tk
 
-pad = 1
-width = 12
+TK_PADDING = 1
+TK_WIDTH = 12
 
 
 class Entry(tk.Entry):
@@ -20,8 +20,8 @@ class Entry(tk.Entry):
             pass
 
     def grid(self, **kwargs):
-        kwargs['padx'] = pad
-        kwargs['pady'] = pad
+        kwargs['padx'] = TK_PADDING
+        kwargs['pady'] = TK_PADDING
         super().grid(**kwargs)
 
 
@@ -30,8 +30,8 @@ class Label(tk.Label):
         super().__init__(master, **kwargs)
 
     def grid(self, **kwargs):
-        kwargs['padx'] = pad
-        kwargs['pady'] = pad
+        kwargs['padx'] = TK_PADDING
+        kwargs['pady'] = TK_PADDING
         super().grid(**kwargs)
 
 
@@ -49,6 +49,4 @@ class UfloatVar(tk.StringVar):
         except ValueError:
             return
         super().set(value)
-
-
 

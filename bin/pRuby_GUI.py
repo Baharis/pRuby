@@ -6,392 +6,230 @@ import matplotlib as mpl
 import matplotlib.pyplot as pp
 import numpy as np
 import uncertainties as uc
+from natsort import natsorted
 
-from routines import backhunt, peakhunt, translating, correcting
-from utility.cycle_generator import cycle_generator
-import utility.tk_objects as tkob
+from pruby.routines.reading import reading_routine_manager
+from pruby.routines.fitting import backfitting_routine_manager
+from pruby.routines.fitting import peakfitting_routine_manager
+from pruby.routines.correcting import correcting_routine_manager
+from pruby.routines.translating import translating_routine_manager
+from pruby.routines.drawing import drawing_routine_manager
+from pruby.constants import R1_0, R2_0, T_0, P_0
+from pruby.calculator import PressureCalculator
+import pruby.utility.tk_objects as tkob
 
 
 class Application(tk.Frame):
-    dots_low_limit = 690.0
-    dots_high_limit = 705.0
 
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        os.chdir(os.path.expanduser('~/x/HP/ruby'))
-        default_color_cycle = cycle_generator('r', 'g', 'b', 'c', 'm', 'y')
-        rainbow_color_cycle = cycle_generator('red', 'darkorange', 'gold',
-                                              'olivedrab', 'g', 'midnightblue',
-                                              'purple', 'magenta')
+        os.chdir(os.path.expanduser('~/'))
 
         # SETTING CONSTANTS
-        self.r1_ref = uc.ufloat(694.2, 0.1)
-        self.t_ref = uc.ufloat(24.85, 0.1)
-        self.p1_ref = uc.ufloat(0.0, 0.28)
-        self.r1_sam = self.r1_ref
-        self.t_sam = self.t_ref
-        self.p1_sam = self.p1_ref
-        self.dots = None
-        self.dots_corrected = None
-        self.data_autodraw = tk.BooleanVar(value=False)
-        self.filenext = ''
-        self.fileprevious = ''
-        self.fit_color_cycle = default_color_cycle
-        self.fit_successful = True
-        self.backhunt_results = {}
-        self.peakhunt_results = {}
-        self.backhunt_method = backhunt.default()
-        self.peakhunt_method = peakhunt.default()
-        self.shifttop_method = translating.default()
-        self.tempcorr_method = correcting.default()
-        self.method_backhunt_stringvar = \
-            tk.StringVar(value=backhunt.default().id)
-        self.method_peakhunt_stringvar = \
-            tk.StringVar(value=peakhunt.default().id)
-        self.method_shifttop_stringvar = \
-            tk.StringVar(value=translating.default().__name__)
-        self.method_tempcorr_stringvar = \
-            tk.StringVar(value=correcting.default().__name__)
-        self.backhunt_methods = backhunt.methods()
-        self.peakhunt_methods = peakhunt.methods()
-        self.shifttop_methods = translating.methods()
-        self.tempcorr_methods = correcting.methods()
+        self.r1_ref = R1_0
+        self.t_ref = T_0
+        self.p1_ref = P_0  # was ufloat(0.0, 0.28)
+        self.autodraw = tk.BooleanVar(value=False)
+        self.calculator = PressureCalculator()
 
-        # BUILDING MENU
+        # method string variables
+        self.reading_routine = tk.StringVar()
+        self.reading_routine.set(reading_routine_manager.default.name)
+        self.backfitting_routine = tk.StringVar()
+        self.backfitting_routine.set(backfitting_routine_manager.default.name)
+        self.peakfitting_routine = tk.StringVar()
+        self.peakfitting_routine.set(peakfitting_routine_manager.default.name)
+        self.correcting_routine = tk.StringVar()
+        self.correcting_routine.set(correcting_routine_manager.default.name)
+        self.translating_routine = tk.StringVar()
+        self.translating_routine.set(translating_routine_manager.default.name)
+        self.drawing_routine = tk.StringVar()
+        self.drawing_routine.set(drawing_routine_manager.default.name)
+
+        # BUILDING TOP MENU
         self.menu = tk.Menu(self)
         root.config(menu=self.menu)
+
         self.menu_data = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Data", menu=self.menu_data)
-        self.menu_data.add_command(label='Import',
-                                   command=self.data_import)
-        self.menu_data.add_command(label='Draw',
-                                   command=self.data_draw)
-        self.menu_data.add_command(label='To reference',
-                                   command=self.data_to_reference)
-        self.menu_data.add_command(label='From reference',
-                                   command=self.data_from_reference)
-        self.menu_data.add_checkbutton(label='Auto draw',
-                                       onvalue=True, offvalue=False,
-                                       variable=self.data_autodraw)
+        self.menu_data.add_command(label='Load', command=self.open_file_dialogue)
+        self.menu_data.add_command(label='Draw', command=self.data_draw)
+        self.menu_data.add_command(label='To reference', command=self.save_reference)
+        self.menu_data.add_command(label='From reference', command=self.load_reference)
+        self.menu_data.add_checkbutton(label='Auto draw', onvalue=True,
+                                       offvalue=False, variable=self.autodraw)
+
         self.menu_methods = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Methods", menu=self.menu_methods)
-
-        self.menu_methods.add_command(label='Background estimation',
-                                      state='disabled')
-        for m in self.backhunt_methods.values():
-            self.menu_methods.add_radiobutton(
-                label=m.name, variable=self.method_backhunt_stringvar,
-                value=m.id, command=self.methods_set)
-        self.menu_methods.add_separator()
-        self.menu_methods.add_command(label='Peak fitting',
-                                      state='disabled')
-        for m in self.peakhunt_methods.values():
-            self.menu_methods.add_radiobutton(
-                label=m.name, variable=self.method_peakhunt_stringvar,
-                value=m.id, command=self.methods_set)
-        self.menu_methods.add_separator()
-        self.menu_methods.add_command(label='Temperature correction',
-                                      state='disabled')
-        for key, m in self.tempcorr_methods.items():
-            self.menu_methods.add_radiobutton(
-                label=m['name'], variable=self.method_tempcorr_stringvar,
-                value=m['function'].__name__, command=self.methods_set)
-        self.menu_methods.add_separator()
-        self.menu_methods.add_command(label='Pressure determination',
-                                      state='disabled')
-        for key, m in self.shifttop_methods.items():
-            self.menu_methods.add_radiobutton(
-                label=m['name'], variable=self.method_shifttop_stringvar,
-                value=m['function'].__name__, command=self.methods_set)
-        self.menu.add_command(label='?', command=self.about)
+        self.menu_methods.add_command(label='Reading', state='disabled')
+        for m in reading_routine_manager.list:
+            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
+                                              variable=self.reading_routine, command=self.set_methods)
+        self.menu_methods.add_command(label='Background', state='disabled')
+        for m in backfitting_routine_manager.list:
+            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
+                                              variable=self.backfitting_routine, command=self.set_methods)
+        self.menu_methods.add_command(label='Spectrum', state='disabled')
+        for m in peakfitting_routine_manager.list:
+            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
+                                              variable=self.peakfitting_routine, command=self.set_methods)
+        self.menu_methods.add_command(label='Temperature correction', state='disabled')
+        for m in correcting_routine_manager.list:
+            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
+                                              variable=self.correcting_routine, command=self.set_methods)
+        self.menu_methods.add_command(label='Pressure determination', state='disabled')
+        for m in translating_routine_manager.list:
+            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
+                                              variable=self.translating_routine, command=self.set_methods)
+        self.menu_methods.add_command(label='Drawing style', state='disabled')
+        for m in drawing_routine_manager.list:
+            self.menu_methods.add_radiobutton(label=m.name, value=m.name,
+                                              variable=self.drawing_routine, command=self.set_methods)
+        # self.menu_methods.add_separator() add separators if necessary
+        self.menu.add_command(label='?', command=self.show_about)
 
         # ENTRY AREA - file
-        self.filename_stringvar = tk.StringVar(value='')
-        self.file_previous_button = tk.Button(self, text='\u25c0',
-            command=self.file_toprevious)
-        self.file_previous_button.grid(row=0, column=0)
-        self.file_entry = tk.Entry(self, textvariable=self.filename_stringvar,
-                                   width=12, justify='left')
+        self.file_name = tk.StringVar(value='')
+        self.file_entry = tk.Entry(self, width=12, textvariable=self.file_name)
         self.file_entry.grid(row=0, column=1, columnspan=2, padx=1, pady=1)
         self.file_entry.bind('<Return>', self.file_fromentry)
-        self.file_next_button = tk.Button(self, text='\u25b6',
-            command=self.file_tonext)
+        self.file_previous = ''
+        self.file_previous_button = tk.Button(self, text='\u25c0', command=self.change_file_to_previous)
+        self.file_previous_button.grid(row=0, column=0)
+        self.file_next = ''
+        self.file_next_button = tk.Button(self, text='\u25b6', command=self.change_file_to_next)
         self.file_next_button.grid(row=0, column=3)
 
         # ENTRY AREA - r1
-        self.r1_ufloatvar = tkob.UfloatVar(value=self.r1_ref)
+        self.r1 = tkob.UfloatVar(value=self.r1_ref)
         tk.Label(self, text='R1').grid(row=1, column=0)
-        self.r1_entry = tkob.Entry(self, textvariable=self.r1_ufloatvar,
-                                   command=self.calculate_p1)
+        self.r1_entry = tkob.Entry(self, textvariable=self.r1, command=self.recalculate_p)
         self.r1_entry.grid(row=1, column=1, columnspan=2)
         tkob.Label(self, text='nm').grid(row=1, column=3)
 
         # ENTRY AREA - t
-        self.t_ufloatvar = tkob.UfloatVar(value=self.t_ref)
+        self.t = tkob.UfloatVar(value=self.t_ref)
         tk.Label(self, text='t').grid(row=2, column=0)
-        self.t_entry = tkob.Entry(self, textvariable=self.t_ufloatvar,
-                                command=self.calculate_p1)
+        self.t_entry = tkob.Entry(self, textvariable=self.t, command=self.recalculate_p)
         self.t_entry.grid(row=2, column=1, columnspan=2)
         tk.Label(self, text='\u00B0C').grid(row=2, column=3)
 
         # ENTRY AREA - p1
-        self.p1_ufloatvar = tkob.UfloatVar(value=self.p1_ref)
+        self.p1 = tkob.UfloatVar(value=self.p1_ref)
         tk.Label(self, text='p1').grid(row=3, column=0)
-        self.p1_entry = tkob.Entry(self, textvariable=self.p1_ufloatvar,
-                                 command=self.calculate_p1)
+        self.p1_entry = tkob.Entry(self, textvariable=self.p1, command=self.recalculate_r)
         self.p1_entry.grid(row=3, column=1, columnspan=2)
         tk.Label(self, text='GPa').grid(row=3, column=3)
 
+        # final touches to make sure everything works
+        self.recalculate_p()
+        self.set_methods()
+
     @staticmethod
-    def about():
+    def show_about():
         message = 'pRuby - pressure estimation based on ruby fluorescence ' \
                   'spectrum by Daniel Tcho\u0144\n\n'\
                   'For details and help, visit pRuby page' \
                   '(https://github.com/Baharis/pRuby).'
         tkmb.showinfo(title='About pRuby', message=message)
 
-    def calculate_p1(self, *_):
-        self.r1_sam = uc.ufloat_fromstr(self.r1_entry.get())
-        self.t_sam = uc.ufloat_fromstr(self.t_entry.get())
-        arguments = {'tempcorr_method': self.tempcorr_method,
-                     'shifttop_method': self.shifttop_method,
-                     'r1_sam': self.r1_sam, 't_sam': self.t_sam,
-                     'r1_ref': self.r1_ref, 't_ref': self.t_ref}
-        self.p1_sam = self.shifttop_method(**arguments)
-        self.p1_ufloatvar.set(value=self.p1_sam)
-
-    def trim_dots(self, dots):
-        dots = dots[dots[:, 0].argsort()]
-        new_dots = []
-        for x, y in zip(dots[:, 0], dots[:, 1]):
-            if self.dots_low_limit <= x <= self.dots_high_limit:
-                new_dots.append([x, y])
-        return np.array(new_dots, dtype=(float, float))
-
-    @staticmethod
-    def _parse_txt(path):
-        return np.loadtxt(path, dtype=(float, float))
-        # TODO remove - already moved to reading routines
-
-    @staticmethod
-    def _parse_other(path):
-        file = open(path, "r")
-        dots = []
-        for line in file.readlines():
-            try:
-                x = float(line.strip().split()[0])
-                y = float(line.strip().split()[1])
-            except ValueError:
-                pass
-            else:
-                dots.append([x, y])
-        return np.array(dots, dtype=(float, float))
-        # TODO remove - already moved to reading routines
-
-    def data_draw(self):
-        # RETURN IF NO FILE HAS BEEN IMPORTED YET
-        if self.dots is None:
-            tkmb.showinfo(message='Import data to draw!')
-            return
-
-        # SET BASIC GEOMETRY AND STYLE
-        dots_x = self.dots_corrected[:, 0]
-        dots_y = self.dots_corrected[:, 1]
-        x_min = self.dots_low_limit
-        x_max = self.dots_high_limit
-        x_span = x_max - x_min
-        y_span = np.max(dots_y) - np.min(dots_y)
-        y_min = 0.0  # min(np.min(dots_y) - 0.01 * y_span, 0)
-        y_max = np.max(dots_y) + 0.20 * y_span
-        active_color = next(self.fit_color_cycle)
-        pp.minorticks_on()
-        pp.grid(b=True, which='major', color='gray', alpha=0.2)
-        pp.grid(b=True, axis='x', which='minor', color='gray', alpha=0.2)
-        pp.grid(b=True, axis='y', which='major', color='gray', alpha=0.2)
-        pp.tick_params(axis='x', which='minor', bottom='on')
-
-        # DRAW ELEMENTS OF LAST PEAKHUNT AND FIT:
-        # DOTS
-        label = self.filename_stringvar.get() + ', ' + self.peakhunt_method.name
-        pp.plot(dots_x, dots_y, marker='.', color=active_color,
-                linestyle='None', label=label)
-
-        if self.fit_successful:
-            # PEAK POSITIONS
-            pp.plot(self.peakhunt_results['r1_val'],
-                    self.peakhunt_results['r1_int'],
-                    color=active_color, marker='v', markersize='8')
-            pp.plot(self.peakhunt_results['r2_val'],
-                    self.peakhunt_results['r2_int'],
-                    color=active_color, marker='v', markersize='8')
-
-            # BACKFIT CURVES AND FILLS
-            bg_function = lambda x: -self.backhunt_results['fit_function'](x)
-            for fit_range in self.backhunt_results['fit_range']:
-                curve_x = np.linspace(start=fit_range[0], stop=fit_range[1],
-                                      num=int(100*(fit_range[1]-fit_range[0])))
-                pp.plot(curve_x, bg_function(curve_x), linestyle='--',
-                        color=active_color, alpha=0.5)
-                pp.fill_between(x=curve_x, y1=bg_function(curve_x), y2=y_min,
-                            color=active_color, alpha=0.1)
-
-            # PEAKFIT CURVES AND FILLS
-            fit_function = self.peakhunt_results['fit_function']
-            for fit_range in self.peakhunt_results['fit_range']:
-                curve_x = np.linspace(start=fit_range[0], stop=fit_range[1],
-                                      num=int(100*(fit_range[1]-fit_range[0])))
-                pp.plot(curve_x, fit_function(curve_x), linestyle='-',
-                        color=active_color)
-                pp.fill_between(x=curve_x, y1=y_min, y2=fit_function(curve_x),
-                                color=active_color, alpha=0.1)
-            # TODO fix double fill
-
-        # X-AXIS AND LEGEND
-        ax = pp.gca()
-        ax.set_xlim([x_min, x_max])
-        ax.annotate('nm', xy=(1, 0), ha='left', va='top',
-                    xytext=(10, - 3 - mpl.rcParams['xtick.major.pad']),
-                    xycoords='axes fraction', textcoords='offset points')
-        pp.legend()
-        pp.show()
-
-    def background_fit(self):
-        try:
-            fitter = self.backhunt_method()
-            fitter.fit_sequentially(self.dots)
-            self.backhunt_results['fit_function'] = fitter.f
-            self.backhunt_results['fit_range'] = fitter.fit_area
-        except RuntimeError:
-            tkmb.showerror(message='Background could not be fitted! '
-                                   'Consider changing the backhunt method.')
-            self.fit_successful = False
-        else:
-            self.fit_successful = True
-        new_dots = list()
-        for x, y in self.dots:
-            new_dots.append((x, y - self.backhunt_results['fit_function'](x)))
-        self.dots_corrected = np.array(new_dots, dtype=(float, float))
-
-    def data_fit(self):
-        try:
-            fitter = self.peakhunt_method()
-            fitter.fit_sequentially(self.dots_corrected)
-            self.peakhunt_results['r1_val'] = fitter.r1_val
-            self.peakhunt_results['r1_unc'] = fitter.r1_unc
-            self.peakhunt_results['r1_int'] = fitter.r1_int
-            self.peakhunt_results['r2_val'] = fitter.r2_val
-            self.peakhunt_results['r2_unc'] = fitter.r2_unc
-            self.peakhunt_results['r2_int'] = fitter.r2_int
-            self.peakhunt_results['fit_function'] = fitter.f
-            self.peakhunt_results['fit_range'] = fitter.fit_area
-        except RuntimeError:
-            tkmb.showerror(message='Data could not be fitted! '
-                                   'Consider changing the peakhunt method.')
-            self.fit_successful = False
-        else:
-            self.fit_successful = True
-            self.r1_sam = uc.ufloat(self.peakhunt_results['r1_val'],
-                                    self.peakhunt_results['r1_unc'])
-            self.r1_ufloatvar.set(value=self.r1_sam)
-
-    def data_import(self):
-        path = tkfd.askopenfilename(
-            title='Open ruby file...',
-            filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
-            initialdir=os.getcwd())
-        self.file_change(path)
-
-    def file_change(self, path):
-        if len(path) > 0:
-            try:
-                dots = self._parse_txt(path)
-            except ValueError:
-                try:
-                    dots = self._parse_other(path)
-                except ValueError:
-                    tkmb.showerror(message='Cannot interpret file content')
-                    return
-            except PermissionError:
-                tkmb.showerror(message='No permissions to read this file')
-                return
-            except TypeError:
-                tkmb.showerror(message='Cannot interpret file content')
-                return
-        else:
-            return
-        directory, filename = os.path.split(path)
-        self.filename_stringvar.set(filename)
-        try:
-            os.chdir(directory)
-        except FileNotFoundError:
-            pass
-        self.file_list()
-        self.dots = self.trim_dots(dots=dots)
-        self.background_fit()
-        self.data_fit()
-        self.calculate_p1()
-        if self.data_autodraw.get() is True:
+    def recalculate_p(self, *_):
+        # calculate the shift for current calculator
+        self.calculator.shift = 0.0
+        self.calculator.t = self.t_ref
+        self.calculator.p = 0.0
+        self.calculator.calculate_r1()
+        self.calculator.shift = self.r1_ref - self.calculator.r1_x
+        # calculate the pressure for current data
+        self.calculator.r1_x = uc.ufloat_fromstr(self.r1.get())
+        self.calculator.t = uc.ufloat_fromstr(self.t.get())
+        self.calculator.calculate_pressure()
+        self.p1.set(value=self.calculator.p)
+        if self.autodraw.get() is True:
             self.data_draw()
 
-    def data_to_reference(self):
-        self.r1_ref = uc.ufloat_fromstr(self.r1_ufloatvar.get())
-        self.t_ref = uc.ufloat_fromstr(self.t_ufloatvar.get())
-        self.p1_ref = uc.ufloat_fromstr(self.p1_ufloatvar.get())
+    def recalculate_r(self, *_):
+        self.calculator.p = uc.ufloat_fromstr(self.p1.get())
+        self.calculator.t = uc.ufloat_fromstr(self.t.get())
+        self.calculator.calculate_r1()
+        self.r1.set(self.calculator.r1_x)
 
-    def data_from_reference(self):
-        self.r1_sam = self.r1_ref
-        self.r1_ufloatvar.set(self.r1_sam)
-        self.t_sam = self.t_ref
-        self.t_ufloatvar.set(self.t_sam)
-        self.p1_sam = self.p1_ref
-        self.p1_ufloatvar.set(self.p1_sam)
-        self.calculate_p1()
+    def open_file_dialogue(self):
+        path = tkfd.askopenfilename(
+            title='Open ruby spectrum file...',
+            filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
+            initialdir=os.getcwd())
+        directory, filename = os.path.split(path)
+        os.chdir(directory)
+        self.change_file(filename)
+
+    def change_file(self, filename):
+        self.file_name.set(filename)
+        if filename is '':
+            return
+        self.update_file_list()
+        try:
+            self.calculator.read_and_fit(filename)
+        except RuntimeError:
+            tkmb.showerror(message='Fitting failed!'
+                                   'Consider changing fiting routines.')
+            return
+        except FileNotFoundError:
+            tkmb.showerror(message='The file does not exist')
+            return
+        except (TypeError, ValueError, UnicodeDecodeError):
+            tkmb.showerror(message='Cannot interpret file content')
+            return
+        except PermissionError:
+            tkmb.showerror(message='No permissions to read this file')
+            return
+        self.r1.set(value=self.calculator.r1_x)
+        self.recalculate_p()
+
+    def change_file_to_next(self):
+        return self.change_file(self.file_next)
+
+    def change_file_to_previous(self):
+        return self.change_file(self.file_previous)
+
+    def save_reference(self):
+        self.r1_ref = uc.ufloat_fromstr(self.r1.get())
+        self.t_ref = uc.ufloat_fromstr(self.t.get())
+        self.p1_ref = uc.ufloat_fromstr(self.p1.get())
+        self.recalculate_p()
+
+    def load_reference(self):
+        self.r1.set(self.r1_ref)
+        self.t.set(self.t_ref)
+        self.recalculate_p()
 
     def file_fromentry(self, *_):
         filename = self.file_entry.get()
         if os.path.isfile(os.path.join(os.getcwd(), filename)):
-            self.file_change(filename)
+            self.change_file(filename)
         elif os.path.isfile(filename):
-            self.file_change(filename)
+            self.change_file(filename)
 
-    def file_list(self):
-        filelist = []
-        for filename in os.listdir(os.getcwd()):
-            if not os.path.isdir(filename):
-                filelist.append(filename)
-        filelist.sort()
-        fileindex = filelist.index(self.filename_stringvar.get())
-        try:
-            self.filenext = filelist[(fileindex + 1) % len(filelist)]
-        except IndexError:
-            self.filenext = ''
-        try:
-            self.fileprevious = filelist[fileindex - 1]
-        except IndexError:
-            self.fileprevious = ''
+    def update_file_list(self):
+        files = natsorted([f for f in os.listdir(os.getcwd())
+                           if not os.path.isdir(f)])
+        index = files.index(self.file_entry.get())
+        self.file_next = files[(index + 1) % len(files)]
+        self.file_previous = files[(len(files) + index - 1) % len(files)]
 
-    def file_tonext(self):
-        self.file_change(self.filenext)
+    def set_methods(self):
+        self.calculator.set_routine(
+            reading=self.reading_routine.get(),
+            backfitting=self.backfitting_routine.get(),
+            peakfitting=self.peakfitting_routine.get(),
+            correcting=self.correcting_routine.get(),
+            translating=self.translating_routine.get(),
+            drawing=self.drawing_routine.get())
+        self.recalculate_p()
 
-    def file_toprevious(self):
-        self.file_change(self.fileprevious)
-
-    def methods_set(self):
-        self.backhunt_method = \
-         self.backhunt_methods[self.method_backhunt_stringvar.get()]
-        self.peakhunt_method = \
-         self.peakhunt_methods[self.method_peakhunt_stringvar.get()]
-        self.shifttop_method = \
-         self.shifttop_methods[self.method_shifttop_stringvar.get()]['function']
-        self.tempcorr_method =\
-         self.tempcorr_methods[self.method_tempcorr_stringvar.get()]['function']
-        if self.dots is not None:
-            self.background_fit()
-            self.data_fit()
-        if self.data_autodraw.get() is True:
-            self.data_draw()
-        self.calculate_p1()
+    def data_draw(self):
+        self.calculator.draw()
 
 
 # MAIN PROGRAM
@@ -403,5 +241,8 @@ if __name__ == '__main__':
     root.attributes("-topmost", True)
     icon = tk.PhotoImage(file=app_wd + '/resources/icon.gif')
     root.tk.call('wm', 'iconphoto', root._w, icon)
+    # TODO for some bizzare reason the icon died while moving drawing to routine
+    # TODO also looks like text fields are suddenly empty and can't be filled ?!
+    # TODO tommorow. tired.
     root.resizable(False, False)
     root.mainloop()
