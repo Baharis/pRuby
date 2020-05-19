@@ -1,0 +1,63 @@
+from abc import abstractmethod
+from scipy.optimize import curve_fit
+from .base import Strategy
+from ..utility.maths import polynomial
+from pruby.spectrum import Curve
+
+
+class TemplateBackfittingStrategy:
+    @staticmethod
+    def _approximate_linearly(spectrum):
+        def linear_function(x, _a0, _a1):
+            return polynomial(a0, a1)(x)
+        a1 = (spectrum.y[-1] - spectrum.y[0]) / (spectrum.x[-1] - spectrum.x[0])
+        a0 = spectrum.y[0] - a1 * spectrum.x[0]
+        spectrum.curve = Curve(func=linear_function, args=(a0, a1))
+
+    @abstractmethod
+    def _prepare_backfit(self, calc):
+        pass
+
+    def backfit(self, calc):
+        self._prepare_backfit(calc)
+        for cycle in range(50):
+            previous_mse = calc.back_spectrum.mse
+            x = calc.back_spectrum.focused.x
+            y = calc.back_spectrum.focused.y
+            si = calc.back_spectrum.focused.si
+            calc.back_spectrum.curve.args, _ = \
+                curve_fit(calc.back_spectrum.curve, xdata=x, ydata=y,
+                          p0=calc.back_spectrum.curve.args, sigma=si)
+            if previous_mse / calc.back_spectrum.mse - 1 < 1e-10:
+                break
+        calc.back_spectrum.y = calc.back_spectrum.f
+        calc.peak_spectrum = calc.raw_spectrum
+        calc.peak_spectrum.y = calc.raw_spectrum.y - calc.back_spectrum.y
+
+
+class HuberBackfittingStrategy(TemplateBackfittingStrategy):
+    name = 'Linear Huber'
+
+    def _prepare_backfit(self, calc):
+        calc.back_spectrum = calc.raw_spectrum
+        self._approximate_linearly(calc.back_spectrum)
+        calc.back_spectrum.focus_on_whole()
+        calc.back_spectrum.sigma_type = 'huber'
+
+
+class SateliteBackfittingStrategy(TemplateBackfittingStrategy):
+    name = 'Linear Satelite'
+
+    def _prepare_backfit(self, calc):
+        calc.back_spectrum = calc.raw_spectrum
+        self._approximate_linearly(calc.back_spectrum)
+        calc.back_spectrum.focus_on_edge(length=1.0)
+        calc.back_spectrum.sigma_type = 'equal'
+
+
+class BackfittingStrategy(Strategy):
+    pass
+
+
+BackfittingStrategy.subscribe(HuberBackfittingStrategy)
+BackfittingStrategy.subscribe(SateliteBackfittingStrategy)

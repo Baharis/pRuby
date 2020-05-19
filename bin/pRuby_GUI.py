@@ -8,7 +8,7 @@ import numpy as np
 import uncertainties as uc
 from natsort import natsorted
 
-from pruby.routines.manager import routine_manager
+from pruby.strategy.base import routine_manager
 from pruby.constants import R1_0, R2_0, T_0, P_0
 from pruby.calculator import PressureCalculator
 import pruby.utility.tk_objects as tkob
@@ -157,7 +157,7 @@ class Application(tk.Frame):
             self.calculator.read_and_fit(filename)
         except RuntimeError:
             tkmb.showerror(message='Fitting failed!'
-                                   'Consider changing fiting routines.')
+                                   'Consider changing fiting strategy.')
             return
         except FileNotFoundError:
             tkmb.showerror(message='The file does not exist')
