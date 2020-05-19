@@ -2,13 +2,10 @@ import os
 import tkinter as tk
 import tkinter.filedialog as tkfd
 import tkinter.messagebox as tkmb
-import matplotlib as mpl
-import matplotlib.pyplot as pp
-import numpy as np
 import uncertainties as uc
 from natsort import natsorted
 
-from pruby.strategy.base import routine_manager
+from pruby.strategy import *
 from pruby.constants import R1_0, R2_0, T_0, P_0
 from pruby.calculator import PressureCalculator
 import pruby.utility.tk_objects as tkob
@@ -29,18 +26,18 @@ class Application(tk.Frame):
         self.calculator = PressureCalculator()
 
         # method string variables
-        self.reading_routine = tk.StringVar(
-            value=routine_manager.default['reading'].name)
-        self.backfitting_routine = tk.StringVar(
-            value=routine_manager.default['backfitting'].name)
-        self.peakfitting_routine = tk.StringVar(
-            value=routine_manager.default['peakfitting'].name)
-        self.correcting_routine = tk.StringVar(
-            value=routine_manager.default['correcting'].name)
-        self.translating_routine = tk.StringVar(
-            value=routine_manager.default['translating'].name)
-        self.drawing_routine = tk.StringVar(
-            value=routine_manager.default['drawing'].name)
+        self.reading_strategy = tk.StringVar(
+            value=self.calculator.strategy.reader.name)
+        self.backfitting_strategy = tk.StringVar(
+            value=self.calculator.strategy.backfitter.name)
+        self.peakfitting_strategy = tk.StringVar(
+            value=self.calculator.strategy.peakfitter.name)
+        self.correcting_strategy = tk.StringVar(
+            value=self.calculator.strategy.corrector.name)
+        self.translating_strategy = tk.StringVar(
+            value=self.calculator.strategy.translator.name)
+        self.drawing_strategy = tk.StringVar(
+            value=self.calculator.strategy.drawer.name)
 
         # BUILDING TOP MENU
         self.menu = tk.Menu(self)
@@ -55,22 +52,28 @@ class Application(tk.Frame):
         self.menu_data.add_checkbutton(label='Auto draw', onvalue=True,
                                        offvalue=False, variable=self.autodraw)
 
-        self.menu_methods = tk.Menu(self.menu, tearoff=0)
-        self.menu.add_cascade(label="Methods", menu=self.menu_methods)
+        self.menu_options = tk.Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label="Options", menu=self.menu_options)
 
-        def make_methods_submenu(role, label):
-            self.menu_methods.add_command(label=label, state='disabled')
-            for m in routine_manager.names[role]:
-                self.menu_methods.add_radiobutton(label=m, value=m,
-                    variable=getattr(self, role+'_routine'),
-                    command=self.set_methods)
-            # self.menu_methods.add_separator() add separators if necessary
-        make_methods_submenu('reading', 'Reading')
-        make_methods_submenu('backfitting', 'Background fitting')
-        make_methods_submenu('peakfitting', 'Spectrum fitting')
-        make_methods_submenu('correcting', 'Temperature correction')
-        make_methods_submenu('translating', 'Pressure determination')
-        make_methods_submenu('drawing', 'Drawing style')
+        def make_options_submenu(strategy_list, str_var, label):
+            self.menu_options.add_command(label=label, state='disabled')
+            for strategy in strategy_list:
+                self.menu_options.add_radiobutton(label=strategy.name,
+                value=strategy.name, variable=str_var, command=self.set_methods)
+            self.menu_options.add_separator()  # separators if necessary
+
+        make_options_submenu(self.calculator.strategy.readers,
+                             self.reading_strategy, 'Reading')
+        make_options_submenu(self.calculator.strategy.backfitters,
+                             self.backfitting_strategy, 'Background fitting')
+        make_options_submenu(self.calculator.strategy.peakfitters,
+                             self.peakfitting_strategy, 'Spectrum fitting')
+        make_options_submenu(self.calculator.strategy.correctors,
+                             self.correcting_strategy, 'Temperature correction')
+        make_options_submenu(self.calculator.strategy.translators,
+                             self.translating_strategy, 'Pressure determination')
+        make_options_submenu(self.calculator.strategy.drawers,
+                             self.drawing_strategy, 'Drawing style')
         self.menu.add_command(label='?', command=self.show_about)
 
         # ENTRY AREA - file
@@ -123,12 +126,12 @@ class Application(tk.Frame):
         self.calculator.shift = 0.0
         self.calculator.t = self.t_ref
         self.calculator.p = 0.0
-        self.calculator.calculate_r1()
-        self.calculator.shift = self.r1_ref - self.calculator.r1_x
+        self.calculator.calculate_r1_from_p()
+        self.calculator.shift = self.r1_ref - self.calculator.r1
         # calculate the pressure for current data
-        self.calculator.r1_x = uc.ufloat_fromstr(self.r1.get())
+        self.calculator.r1 = uc.ufloat_fromstr(self.r1.get())
         self.calculator.t = uc.ufloat_fromstr(self.t.get())
-        self.calculator.calculate_pressure()
+        self.calculator.calculate_p_from_r1()
         self.p1.set(value=self.calculator.p)
         if self.autodraw.get() is True:
             self.data_draw()
@@ -136,8 +139,8 @@ class Application(tk.Frame):
     def recalculate_r(self, *_):
         self.calculator.p = uc.ufloat_fromstr(self.p1.get())
         self.calculator.t = uc.ufloat_fromstr(self.t.get())
-        self.calculator.calculate_r1()
-        self.r1.set(self.calculator.r1_x)
+        self.calculator.calculate_r1_from_p()
+        self.r1.set(self.calculator.r1)
 
     def open_file_dialogue(self):
         path = tkfd.askopenfilename(
@@ -154,7 +157,8 @@ class Application(tk.Frame):
             return
         self.update_file_list()
         try:
-            self.calculator.read_and_fit(filename)
+            self.calculator.filename = filename
+            self.calculator.read_and_fit()
         except RuntimeError:
             tkmb.showerror(message='Fitting failed!'
                                    'Consider changing fiting strategy.')
@@ -168,7 +172,7 @@ class Application(tk.Frame):
         except PermissionError:
             tkmb.showerror(message='No permissions to read this file')
             return
-        self.r1.set(value=self.calculator.r1_x)
+        self.r1.set(value=self.calculator.r1)
         self.recalculate_p()
 
     def change_file_to_next(self):
@@ -203,13 +207,13 @@ class Application(tk.Frame):
         self.file_previous = files[(len(files) + index - 1) % len(files)]
 
     def set_methods(self):
-        self.calculator.set_routine(
-            reading=self.reading_routine.get(),
-            backfitting=self.backfitting_routine.get(),
-            peakfitting=self.peakfitting_routine.get(),
-            correcting=self.correcting_routine.get(),
-            translating=self.translating_routine.get(),
-            drawing=self.drawing_routine.get())
+        self.calculator.strategy.set(
+            reading=self.reading_strategy.get(),
+            backfitting=self.backfitting_strategy.get(),
+            peakfitting=self.peakfitting_strategy.get(),
+            correcting=self.correcting_strategy.get(),
+            translating=self.translating_strategy.get(),
+            drawing=self.drawing_strategy.get())
         self.recalculate_p()
 
     def data_draw(self):

@@ -50,7 +50,10 @@ class Spectrum:
 
     @property
     def domain(self):
-        return LineSubset(min(self.x), max(self.x))
+        if len(self.x) == 0:
+            return LineSubset()
+        else:
+            return LineSubset(min(self.x), max(self.x))
 
     @property
     def focused(self):

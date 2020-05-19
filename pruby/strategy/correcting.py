@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from ..utility.maths import polynomial
 from ..constants import T_0, UZERO
-from .base import Strategy
 
 
 def to_wavelength(wavenumber):
@@ -86,12 +85,3 @@ class NoneCorrectingStrategy(TemplateCorrectingStrategy):
 
     def correct(self, calc):
         calc.t_correction = UZERO
-
-
-class CorrectingStrategy(Strategy):
-    pass
-
-
-CorrectingStrategy.subscribe(VosR1CorrectingStrategy)
-CorrectingStrategy.subscribe(RaganR1CorrectingStrategy)
-CorrectingStrategy.subscribe(NoneCorrectingStrategy)

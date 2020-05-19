@@ -3,7 +3,6 @@ from abc import abstractmethod
 from scipy.optimize import curve_fit as scipy_fit
 from scipy.signal import find_peaks_cwt
 from uncertainties import ufloat
-from .base import Strategy
 from ..utility.maths import gaussian, lorentzian
 from pruby.spectrum import Curve
 from ..constants import R1_0, R2_0
@@ -33,7 +32,7 @@ class TemplatePeakfittingStrategy:
     def find_initial_peaks(spectrum):
         x_span = max(spectrum.x) - min(spectrum.x)
         caret_width = int(0.5 / (x_span / len(spectrum.x))) + 1
-        peak_indices = find_peaks_cwt(spectrum.y, [caret_width])
+        peak_indices = find_peaks_cwt(spectrum.y, [caret_width] * 3)
         peaks = np.array([(spectrum.x[i], spectrum.y[i])
                           for i in peak_indices])
         peaks = peaks[peaks[:, 1].argsort()[::-1]]
@@ -72,7 +71,7 @@ class GaussianPeakfittingStrategy(TemplatePeakfittingStrategy):
     def _prepare_peakfit(self, calc):
         def two_gaussians(x, _a1, _mu1, _si1, _a2, _mu2, _si2):
             return gaussian(_a1, _mu1, _si1)(x) + gaussian(_a2, _mu2, _si2)(x)
-        mu1, a1, mu2, a2 = self.find_initial_peaks(calc.spectrum)
+        mu1, a1, mu2, a2 = self.find_initial_peaks(calc.peak_spectrum)
         si1 = si2 = 0.3
         calc.peak_spectrum.curve = Curve(func=two_gaussians,
                                          args=(a1, mu1, si1, a2, mu2, si2))
@@ -82,8 +81,8 @@ class GaussianPeakfittingStrategy(TemplatePeakfittingStrategy):
 
     def _assign_peaks(self, calc):
         curve = calc.peak_spectrum.curve
-        calc.r1 = self.ufloat_tuple_from_curve_args(curve, x_arg=1, y_arg=0)
-        calc.r2 = self.ufloat_tuple_from_curve_args(curve, x_arg=4, y_arg=3)
+        calc.r1 = self.ufloat_tuple_from_curve_args(curve, x_arg=1, y_arg=0)[0]
+        calc.r2 = self.ufloat_tuple_from_curve_args(curve, x_arg=4, y_arg=3)[0]
 
 
 class PseudovoigtPeakfittingStrategy(TemplatePeakfittingStrategy):
@@ -109,8 +108,8 @@ class PseudovoigtPeakfittingStrategy(TemplatePeakfittingStrategy):
 
     def _assign_peaks(self, calc):
         curve = calc.peak_spectrum.curve
-        calc.r1 = self.ufloat_tuple_from_curve_args(curve, x_arg=1, y_arg=0)
-        calc.r2 = self.ufloat_tuple_from_curve_args(curve, x_arg=5, y_arg=4)
+        calc.r1 = self.ufloat_tuple_from_curve_args(curve, x_arg=1, y_arg=0)[0]
+        calc.r2 = self.ufloat_tuple_from_curve_args(curve, x_arg=5, y_arg=4)[0]
 
 
 class CamelPeakfittingStrategy(TemplatePeakfittingStrategy):
@@ -131,14 +130,5 @@ class CamelPeakfittingStrategy(TemplatePeakfittingStrategy):
 
     def _assign_peaks(self, calc):
         curve = calc.peak_spectrum.curve
-        calc.r1 = self.ufloat_tuple_from_curve_args(curve, x_arg=1, y_arg=0)
-        calc.r2 = self.ufloat_tuple_from_curve_args(curve, x_arg=4, y_arg=3)
-
-
-class PeakfittingStrategy(Strategy):
-    pass
-
-
-PeakfittingStrategy.subscribe(GaussianPeakfittingStrategy)
-PeakfittingStrategy.subscribe(PseudovoigtPeakfittingStrategy)
-PeakfittingStrategy.subscribe(CamelPeakfittingStrategy)
+        calc.r1 = self.ufloat_tuple_from_curve_args(curve, x_arg=1, y_arg=0)[0]
+        calc.r2 = self.ufloat_tuple_from_curve_args(curve, x_arg=4, y_arg=3)[0]

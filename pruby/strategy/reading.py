@@ -1,9 +1,16 @@
+from abc import abstractmethod
 import numpy as np
-from .base import Strategy
 from pruby.spectrum import Spectrum
 
 
-class RawTxtReadingStrategy:
+class ReadingStrategy:
+    @staticmethod
+    @abstractmethod
+    def read(calc):
+        pass
+
+
+class RawTxtReadingStrategy(ReadingStrategy):
     name = 'Raw txt'
 
     @staticmethod
@@ -13,7 +20,7 @@ class RawTxtReadingStrategy:
         calc.raw_spectrum = Spectrum(x_list, y_list).within(calc.limits)
 
 
-class MetaTxtReadingStrategy:
+class MetaTxtReadingStrategy(ReadingStrategy):
     name = 'Metadata txt'
 
     @staticmethod
@@ -31,11 +38,3 @@ class MetaTxtReadingStrategy:
                     x_list.append(new_x)
                     y_list.append(new_y)
         calc.raw_spectrum = Spectrum(x_list, y_list).within(calc.limits)
-
-
-class ReadingStrategy(Strategy):
-    pass
-
-
-ReadingStrategy.subscribe(RawTxtReadingStrategy)
-ReadingStrategy.subscribe(MetaTxtReadingStrategy)

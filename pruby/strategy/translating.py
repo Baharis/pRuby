@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from uncertainties import ufloat
 from ..constants import R1_0, R2_0, T_0, UZERO, P_0
-from .base import Strategy
 
 
 def mao_function(r1, a, b):
@@ -58,13 +57,3 @@ class WeiTranslatingStrategy(TemplateTranslatingStrategy):
         b = b300 + b1 * dt + b2 * dt ** 2
         la_t = la300 + la1 * dt
         calc.p = (a / b) * (pow(r1 / la_t, b) - 1.0)
-
-
-class TranslatingStrategy(Strategy):
-    pass
-
-
-TranslatingStrategy.subscribe(LiuTranslatingStrategy)
-TranslatingStrategy.subscribe(MaoTranslatingStrategy)
-TranslatingStrategy.subscribe(PiermariniTranslatingStrategy)
-TranslatingStrategy.subscribe(WeiTranslatingStrategy)

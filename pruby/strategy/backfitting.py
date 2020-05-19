@@ -1,6 +1,6 @@
+import copy
 from abc import abstractmethod
 from scipy.optimize import curve_fit
-from .base import Strategy
 from ..utility.maths import polynomial
 from pruby.spectrum import Curve
 
@@ -31,7 +31,7 @@ class TemplateBackfittingStrategy:
             if previous_mse / calc.back_spectrum.mse - 1 < 1e-10:
                 break
         calc.back_spectrum.y = calc.back_spectrum.f
-        calc.peak_spectrum = calc.raw_spectrum
+        calc.peak_spectrum = copy.deepcopy(calc.raw_spectrum)
         calc.peak_spectrum.y = calc.raw_spectrum.y - calc.back_spectrum.y
 
 
@@ -39,7 +39,7 @@ class HuberBackfittingStrategy(TemplateBackfittingStrategy):
     name = 'Linear Huber'
 
     def _prepare_backfit(self, calc):
-        calc.back_spectrum = calc.raw_spectrum
+        calc.back_spectrum = copy.deepcopy(calc.raw_spectrum)
         self._approximate_linearly(calc.back_spectrum)
         calc.back_spectrum.focus_on_whole()
         calc.back_spectrum.sigma_type = 'huber'
@@ -49,15 +49,7 @@ class SateliteBackfittingStrategy(TemplateBackfittingStrategy):
     name = 'Linear Satelite'
 
     def _prepare_backfit(self, calc):
-        calc.back_spectrum = calc.raw_spectrum
+        calc.back_spectrum = copy.deepcopy(calc.raw_spectrum)
         self._approximate_linearly(calc.back_spectrum)
         calc.back_spectrum.focus_on_edge(length=1.0)
         calc.back_spectrum.sigma_type = 'equal'
-
-
-class BackfittingStrategy(Strategy):
-    pass
-
-
-BackfittingStrategy.subscribe(HuberBackfittingStrategy)
-BackfittingStrategy.subscribe(SateliteBackfittingStrategy)
