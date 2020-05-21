@@ -29,6 +29,7 @@ class FilenameEntry(tk.Frame):
 
 class UfloatEntry(tk.Frame):
     def __init__(self, parent, left_text, entry_text, right_text, cmd):
+        self.parent = parent
         tk.Frame.__init__(self, parent)
         left_label = tk.Label(self, text=left_text)
         left_label.config(width=int(0.15*WIDTH), justify=tk.CENTER)
@@ -42,7 +43,12 @@ class UfloatEntry(tk.Frame):
         right_label.grid(row=1, column=3, padx=PADX, pady=PADY)
 
     def get(self):
-        return uc.ufloat_fromstr(self.entry.get())
+        try:
+            uc.ufloat_fromstr(self.entry.get())
+            return uc.ufloat_fromstr(self.entry.get())
+        except ValueError as error:
+            self.parent.display('Incorrect entry input format!')
+            raise ValueError(error)
 
     def set(self, value):
         self.entry.delete(0, tk.END)

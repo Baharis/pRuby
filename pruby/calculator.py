@@ -72,5 +72,6 @@ class PressureCalculator:
         else:
             raise AttributeError('The peak spectrum is empty')
 
+
 # TODO: after initiating calculator and closing initial window,
 # TODO: some re-initiation must be done if window has been closed, as it's blank
