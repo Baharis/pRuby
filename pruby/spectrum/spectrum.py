@@ -1,19 +1,7 @@
 import numpy as np
-from copy import deepcopy
-from pruby.utility.line_subset import LineSubset
 
-
-class Curve:
-    def __init__(self, func=lambda x: 0, args=tuple()):
-        self.func = func
-        self.args = args
-        self.uncs = tuple(np.zeros_like(args))
-
-    def __call__(self, *args):
-        if len(args) == 1:
-            return self.func(*args, *self.args)
-        else:
-            return self.func(*args)
+from .curve import Curve
+from ..utility.line_subset import LineSubset
 
 
 class Spectrum:
@@ -24,6 +12,12 @@ class Spectrum:
         self.curve = curve
         self.focus = self.domain if focus == LineSubset() else focus
         self.sigma_type = sigma_type   # 'equal' or 'huber'
+
+    def __len__(self):
+        return len(self.x)
+
+    def __bool__(self):
+        return len(self.x) > 0
 
     @property
     def f(self):
@@ -73,4 +67,6 @@ class Spectrum:
         self.focus = self.domain
 
     def focus_on_points(self, points, width=1.0):
-        self.focus = LineSubset([(p - width/2, p + width/2) for p in points])
+        points_area = LineSubset([(p - width/2, p + width/2) for p in points])
+        self.focus = points_area * self.domain
+

@@ -4,7 +4,7 @@ from scipy.optimize import curve_fit as scipy_fit
 from scipy.signal import find_peaks_cwt
 from uncertainties import ufloat
 from ..utility.maths import gaussian, lorentzian
-from pruby.spectrum import Curve
+from ..spectrum import Curve
 from ..constants import R1_0, R2_0
 
 

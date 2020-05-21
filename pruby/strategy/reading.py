@@ -1,6 +1,6 @@
 from abc import abstractmethod
 import numpy as np
-from pruby.spectrum import Spectrum
+from ..spectrum import Spectrum
 
 
 class ReadingStrategy:

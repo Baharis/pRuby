@@ -52,7 +52,10 @@ class PressureCalculator:
                 self.r1 -= r_step_size
 
     def draw(self):
-        self.strategy.draw()
+        if self.peak_spectrum:
+            self.strategy.draw()
+        else:
+            raise AttributeError('The peak spectrum is empty')
 
 # TODO: after initiating calculator and closing initial window,
 # TODO: some re-initiation must be done if window has been closed, as it's blank

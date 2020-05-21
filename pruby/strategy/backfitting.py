@@ -2,7 +2,7 @@ import copy
 from abc import abstractmethod
 from scipy.optimize import curve_fit
 from ..utility.maths import polynomial
-from pruby.spectrum import Curve
+from ..spectrum import Curve
 
 
 class TemplateBackfittingStrategy:
