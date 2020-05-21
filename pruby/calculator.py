@@ -18,13 +18,28 @@ class PressureCalculator:
         self.peak_spectrum = Spectrum()
         self.r1 = R1_0
         self.r2 = R2_0
+        self.r1_ref = R1_0
         self.t = T_0
+        self.t_ref = T_0
         self.t_correction = 0.0
         self.shift = 0.0
         self.p = P_0
         self.fig, self.ax = None, None
         self.color_cycle = cycle('r', 'g', 'b', 'c', 'm', 'y')
         self.color = 'k'
+
+    def set_currect_as_reference(self):
+        self.r1_ref = self.r1
+        self.t_ref = self.t
+        self.recalculate_shift()
+
+    def recalculate_shift(self):
+        backupped_values = self.r1, self.t, self.p
+        self.shift, self.r1_ref = 0.0, self.r1_ref
+        self.t, self.p = self.t_ref, P_0
+        self.calculate_r1_from_p()
+        self.shift = self.r1_ref - self.r1
+        self.r1, self.t, self.p = backupped_values
 
     def read_and_fit(self):
         self.strategy.read()

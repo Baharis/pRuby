@@ -1,55 +1,63 @@
 import tkinter as tk
+import uncertainties as uc
 
-from pruby.tkinter.variables import UfloatVar
-
-TK_PADDING = 1
-TK_WIDTH = 12
-
-
-class Entry(tk.Entry):
-    def __init__(self, master, var, cmd):
-        kwargs = {'width': 16, 'textvariable': var}
-        if type(var) is UfloatVar:
-            kwargs['justify'] = 'right'
-        else:
-            kwargs['justify'] = 'left'
-        super().__init__(master, **kwargs)
-        try:
-            self.bind('<Return>', cmd)
-        except KeyError:
-            pass
-
-    def grid(self, **kwargs):
-        kwargs['padx'] = TK_PADDING
-        kwargs['pady'] = TK_PADDING
-        super().grid(**kwargs)
+PADX = 1
+PADY = 0
+WIDTH = 24
 
 
-class Label(tk.Label):
-    def __init__(self, master, text):
-        super().__init__(master, text=text)
+class FilenameEntry(tk.Frame):
+    def __init__(self, parent, left_cmd, entry_cmd, right_cmd):
+        tk.Frame.__init__(self, parent)
+        self.value = tk.StringVar(value='')
+        prev_button = tk.Button(self, text='\u25c0', command=left_cmd)
+        prev_button.grid(row=0, column=0, padx=PADX, pady=PADY)
+        self.entry = tk.Entry(self, width=int(0.7 * WIDTH), justify='right')
+        self.set('')
+        self.entry.grid(row=0, column=1, columnspan=2, padx=PADX, pady=PADY)
+        self.entry.bind('<Return>', entry_cmd)
+        next_button = tk.Button(self, text='\u25b6', command=right_cmd)
+        next_button.grid(row=0, column=3, padx=PADX, pady=PADY)
 
-    def grid(self, **kwargs):
-        kwargs['padx'] = TK_PADDING
-        kwargs['pady'] = TK_PADDING
-        super().grid(**kwargs)
+    def get(self):
+        return self.entry.get()
+
+    def set(self, value):
+        self.entry.delete(0, tk.END)
+        self.entry.insert(0, value)
 
 
-class Button(tk.Button):
-    def __init__(self, master, text, cmd):
-        super().__init__(master, text=text, command=cmd)
+class UfloatEntry(tk.Frame):
+    def __init__(self, parent, left_text, entry_text, right_text, cmd):
+        tk.Frame.__init__(self, parent)
+        left_label = tk.Label(self, text=left_text)
+        left_label.config(width=int(0.15*WIDTH), justify=tk.CENTER)
+        left_label.grid(row=1, column=0, padx=PADX, pady=PADY)
+        self.entry = tk.Entry(self, width=int(0.7*WIDTH), justify='right')
+        self.set(entry_text)
+        self.entry.grid(row=1, column=1, columnspan=2, padx=PADX, pady=PADY)
+        self.entry.bind('<Return>', cmd)
+        right_label = tk.Label(self, text=right_text)
+        right_label.config(width=int(0.15*WIDTH), justify=tk.CENTER)
+        right_label.grid(row=1, column=3, padx=PADX, pady=PADY)
+
+    def get(self):
+        return uc.ufloat_fromstr(self.entry.get())
+
+    def set(self, value):
+        self.entry.delete(0, tk.END)
+        self.entry.insert(0, '{0:.2uS}'.format(value))
 
 
-class StatusBar(tk.Label):
-    def __init__(self, master, **kwargs):
-        kwargs['bd'] = 1
-        kwargs['relief'] = tk.SUNKEN
-        kwargs['width'] = 20
-        super().__init__(master, **kwargs)
-        self.config(text='Ready...', anchor='w')
+class StatusBar(tk.Frame):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+        self.bar = tk.Label(self, bd=1, relief=tk.SUNKEN, width=WIDTH+2*PADX)
+        self.bar.config(anchor='w')
+        self.bar.pack()
 
     def display(self, message):
-        self.config(text=message)
+        self.bar.config(text=message)
 
     def grid(self, **kwargs):
         kwargs['padx'] = 0

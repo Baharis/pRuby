@@ -2,12 +2,10 @@ import os
 import tkinter as tk
 import uncertainties as uc
 from natsort import natsorted
-
-import pruby.tkinter.variables
 from pruby.constants import R1_0, T_0, P_0
 from pruby.calculator import PressureCalculator
-from pruby.tkinter import StringVar, UfloatVar, BooleanVar, StatusBar,\
-    Entry, Label, Button, open_file_dialogue, show_about, show_error
+from pruby.tkinter import StatusBar, open_file_dialogue, show_about, show_error
+from pruby.tkinter.gridable import UfloatEntry, FilenameEntry
 
 
 class Application(tk.Frame):
@@ -21,16 +19,16 @@ class Application(tk.Frame):
         self.r1_ref = R1_0
         self.t_ref = T_0
         self.p_ref = P_0  # was ufloat(0.0, 0.28)
-        self.autodraw = BooleanVar(value=False)
+        self.autodraw = tk.BooleanVar(value=False)
         self.calc = PressureCalculator()
 
         # method string variables
-        self.reading_strategy = StringVar(self.calc.strategy.reader.name)
-        self.backfitting_strategy = StringVar(self.calc.strategy.backfitter.name)
-        self.peakfitting_strategy = StringVar(self.calc.strategy.peakfitter.name)
-        self.correcting_strategy = StringVar(self.calc.strategy.corrector.name)
-        self.translating_strategy = StringVar(self.calc.strategy.translator.name)
-        self.drawing_strategy = StringVar(self.calc.strategy.drawer.name)
+        self.reading_strategy = tk.StringVar(value=self.calc.strategy.reader.name)
+        self.backfitting_strategy = tk.StringVar(value=self.calc.strategy.backfitter.name)
+        self.peakfitting_strategy = tk.StringVar(value=self.calc.strategy.peakfitter.name)
+        self.correcting_strategy = tk.StringVar(value=self.calc.strategy.corrector.name)
+        self.translating_strategy = tk.StringVar(value=self.calc.strategy.translator.name)
+        self.drawing_strategy = tk.StringVar(value=self.calc.strategy.drawer.name)
 
         # BUILDING TOP MENU
         self.menu = tk.Menu(self)
@@ -73,35 +71,16 @@ class Application(tk.Frame):
                              self.drawing_strategy, 'Drawing style')
         self.menu.add_command(label='?', command=show_about)
 
-        # ENTRY AREA - file
-        self.filename = StringVar('')
-        self.file_entry = Entry(self, self.filename, self.file_from_entry)
-        self.file_entry.grid(row=0, column=1, columnspan=2, padx=1, pady=1)
-        self.file_prev_button = Button(self, '\u25c0', self.file_to_previous)
-        self.file_prev_button.grid(row=0, column=0)
-        self.file_next_button = Button(self, '\u25b6', self.file_to_next)
-        self.file_next_button.grid(row=0, column=3)
-
-        # ENTRY AREA - r1
-        self.r1 = pruby.tkinter.variables.UfloatVar(value=self.r1_ref)
-        Label(self, text='R1').grid(row=1, column=0)
-        self.r1_entry = Entry(self, var=self.r1, cmd=self.recalculate_p)
-        self.r1_entry.grid(row=1, column=1, columnspan=2)
-        Label(self, text='nm').grid(row=1, column=3)
-
-        # ENTRY AREA - t
-        self.t = pruby.tkinter.variables.UfloatVar(value=self.t_ref)
-        Label(self, text='t').grid(row=2, column=0)
-        self.t_entry = Entry(self, var=self.t, cmd=self.recalculate_p)
-        self.t_entry.grid(row=2, column=1, columnspan=2)
-        Label(self, text='K').grid(row=2, column=3)  # celsius'\u00B0C'
-
-        # ENTRY AREA - p
-        self.p = pruby.tkinter.variables.UfloatVar(value=self.p_ref)
-        Label(self, text='p').grid(row=3, column=0)
-        self.p_entry = Entry(self, var=self.p, cmd=self.recalculate_r)
-        self.p_entry.grid(row=3, column=1, columnspan=2)
-        Label(self, text='GPa').grid(row=3, column=3)
+        # ENTRY AREA
+        self.file = FilenameEntry(self, self.file_to_previous,
+                                  self.file_from_entry, self.file_to_next)
+        self.file.grid(row=0, column=0, columnspan=4)
+        self.r1 = UfloatEntry(self, 'R1', self.r1_ref, 'nm', self.recalculate_p)
+        self.r1.grid(row=1, column=0, columnspan=4)
+        self.t = UfloatEntry(self, 'T', self.t_ref, 'K', self.recalculate_p)
+        self.t.grid(row=2, column=0, columnspan=4)
+        self.p = UfloatEntry(self, 'p', self.t_ref, 'GPa', self.recalculate_r)
+        self.p.grid(row=3, column=0, columnspan=4)
 
         # status bar
         self.status_bar = StatusBar(self)
@@ -110,75 +89,76 @@ class Application(tk.Frame):
         # final touches to make sure everything works
         self.recalculate_p()
         self.set_methods()
+        self.status_bar.display('Ready...')
 
     def recalculate_p(self, *_):
-        # calculate the shift for current calculator
-        self.calc.shift = 0.0
-        self.calc.t = self.t_ref
-        self.calc.p = 0.0
-        self.calc.calculate_r1_from_p()
-        self.calc.shift = self.r1_ref - self.calc.r1
         # calculate the pressure for current data
-        self.calc.r1 = uc.ufloat_fromstr(self.r1.get())
-        self.calc.t = uc.ufloat_fromstr(self.t.get())
+        self.calc.r1 = self.r1.get()
+        self.calc.t = self.t.get()
         self.calc.calculate_p_from_r1()
         self.p.set(value=self.calc.p)
         if self.autodraw.get() is True:
             self.data_draw()
+        self.status_bar.display('Calculated p from R1 and T.')
 
     def recalculate_r(self, *_):
-        self.calc.p = uc.ufloat_fromstr(self.p.get())
-        self.calc.t = uc.ufloat_fromstr(self.t.get())
+        self.calc.p = self.p.get()
+        self.calc.t = self.t.get()
         self.calc.calculate_r1_from_p()
         self.r1.set(self.calc.r1)
+        self.status_bar.display('Calculated R1 from p and T.')
 
     def open_file_dialogue(self):
         path = open_file_dialogue()
-        directory, filename = os.path.split(path)
-        if directory:
-            os.chdir(directory)
-            self.change_file(filename)
+        if not path:
+            self.status_bar.display('No file have been loaded.')
+            return
+        new_directory, new_filename = os.path.split(path)
+        os.chdir(new_directory)
+        self.change_file(new_filename)
 
     def change_file(self, filename):
-        self.filename.set(filename)
+        self.file.set(filename)
         if filename is '':
             return
         try:
             self.calc.filename = filename
             self.calc.read_and_fit()
         except RuntimeError:
-            show_error('Fitting failed! Consider changing fiting strategy.')
+            self.status_bar.display('Fitting spectrum failed!')
             return
         except FileNotFoundError:
-            show_error('The file does not exist')
+            self.status_bar.display('File does not exist!')
             return
         except (TypeError, ValueError, UnicodeDecodeError):
-            show_error('Cannot interpret file content')
+            self.status_bar.display('File cannot be intepreted!')
             return
         except PermissionError:
-            show_error('No permissions to read this file')
+            self.status_bar.display('No permissions to read this file!')
             return
         self.r1.set(value=self.calc.r1)
         self.recalculate_p()
 
     def file_to_next(self):
-        return self.change_file(self.get_filename(self.filename.get(), shift=+1))
+        return self.change_file(self.get_filename(self.file.get(), shift=+1))
 
     def file_to_previous(self):
-        return self.change_file(self.get_filename(self.filename.get(), shift=-1))
+        return self.change_file(self.get_filename(self.file.get(), shift=-1))
 
     def file_from_entry(self, *_):
-        filename = self.filename.get()
+        filename = self.file.get()
         if os.path.isfile(os.path.join(os.getcwd(), filename)):
             self.change_file(filename)
         elif os.path.isfile(filename):
             self.change_file(filename)
 
     def save_reference(self):
-        self.r1_ref = uc.ufloat_fromstr(self.r1.get())
-        self.t_ref = uc.ufloat_fromstr(self.t.get())
-        self.p_ref = uc.ufloat_fromstr(self.p.get())
+        self.calc.r1 = self.r1_ref = self.r1.get()
+        self.calc.t = self.t_ref = self.t.get()
+        self.calc.p = self.p_ref = self.p.get()
+        self.calc.set_currect_as_reference()
         self.recalculate_p()
+        self.status_bar.display('R1 & T saved as reference for p=0.')
 
     def load_reference(self):
         self.r1.set(self.r1_ref)
@@ -203,13 +183,15 @@ class Application(tk.Frame):
             correcting=self.correcting_strategy.get(),
             translating=self.translating_strategy.get(),
             drawing=self.drawing_strategy.get())
+        self.calc.recalculate_shift()
         self.recalculate_p()
 
     def data_draw(self):
         try:
             self.calc.draw()
+            self.status_bar.display('Drawn currently loaded data.')
         except AttributeError:
-            show_error('Peak spectrum is empty! Load data to draw.')
+            self.status_bar.display('No loaded spectrum to draw!')
 
 
 # MAIN PROGRAM
@@ -221,8 +203,5 @@ if __name__ == '__main__':
     root.attributes("-topmost", True)
     icon = tk.PhotoImage(file=app_wd + '/resources/icon.gif')
     root.tk.call('wm', 'iconphoto', root._w, icon)
-    # TODO for some bizzare reason the icon died while moving drawing to routine
-    # TODO also looks like text fields are suddenly empty and can't be filled ?!
-    # TODO tommorow. tired.
     root.resizable(False, False)
     root.mainloop()
