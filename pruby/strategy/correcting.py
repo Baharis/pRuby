@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from ..utility.maths import polynomial
 from ..constants import T_0, UZERO
+from ..utility.units import wavelength
 
 
 def to_wavelength(wavenumber):
