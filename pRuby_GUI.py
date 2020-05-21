@@ -1,10 +1,10 @@
 import os
 import tkinter as tk
 from natsort import natsorted
-from .constants import R1_0, T_0, P_0
-from .calculator import PressureCalculator
-from .tkinter import StatusBar, open_file_dialogue, show_about
-from .tkinter.gridable import UfloatEntry, FilenameEntry
+from pruby.constants import R1_0, T_0, P_0
+from pruby.calculator import PressureCalculator
+from pruby.tkobjects import StatusBar, open_file_dialogue, show_about
+from pruby.tkobjects.gridable import UfloatEntry, FilenameEntry
 
 
 class Application(tk.Frame):
@@ -53,7 +53,7 @@ class Application(tk.Frame):
                                        offvalue=False, variable=self.autodraw)
 
         self.menu_options = tk.Menu(self.menu, tearoff=0)
-        self.menu.add_cascade(label="Options", menu=self.menu_options)
+        self.menu.add_cascade(label="Methods", menu=self.menu_options)
 
         def make_options_submenu(strategy_list, str_var, label):
             self.menu_options.add_command(label=label, state='disabled')
@@ -80,11 +80,14 @@ class Application(tk.Frame):
         self.file = FilenameEntry(self, self.file_to_previous,
                                   self.file_from_entry, self.file_to_next)
         self.file.grid(row=0, column=0, columnspan=4)
-        self.r1 = UfloatEntry(self, 'R1', self.r1_ref, 'nm', self.recalculate_p)
+        self.r1 = UfloatEntry(self, label='R1', entry=self.r1_ref,
+                              unit='nm', cmd=self.recalculate_p)
         self.r1.grid(row=1, column=0, columnspan=4)
-        self.t = UfloatEntry(self, 'T', self.t_ref, 'K', self.recalculate_p)
+        self.t = UfloatEntry(self, label='T', entry=self.t_ref, offset=273.15,
+                             unit='\u00B0C', cmd=self.recalculate_p)
         self.t.grid(row=2, column=0, columnspan=4)
-        self.p = UfloatEntry(self, 'p', self.t_ref, 'GPa', self.recalculate_r)
+        self.p = UfloatEntry(self, label='p', entry=self.t_ref,
+                             unit='GPa', cmd=self.recalculate_r)
         self.p.grid(row=3, column=0, columnspan=4)
 
         # STATUS BAR
