@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from ..utility.maths import polynomial
+from ..utility.functions import polynomial
 from ..constants import T_0, UZERO
 
 

@@ -24,7 +24,7 @@ class Spectrum:
         return np.array(list(map(self.curve, self.x)))
 
     @property
-    def diff(self):
+    def delta(self):
         return self.y - self.f
 
     @property
@@ -32,15 +32,15 @@ class Spectrum:
         if self.sigma_type == 'equal':
             return np.ones_like(self.x)
         elif self.sigma_type == 'huber':
-            tol = 0.05 * max(abs(self.diff))
+            tol = 0.05 * max(abs(self.delta))
             return np.array([tol ** 2 if d < tol else
-                             tol * (2 * d - tol) for d in self.diff])
+                             tol * (2 * d - tol) for d in self.delta])
         else:
             raise KeyError('Unknown sigma type "{}"'.format(self.sigma_type))
 
     @property
     def mse(self):
-        return sum((self.diff / self.si) ** 2) / len(self.diff)
+        return sum((self.delta / self.si) ** 2) / len(self.delta)
 
     @property
     def domain(self):
@@ -53,10 +53,10 @@ class Spectrum:
     def focused(self):
         return self.within(self.focus)
 
-    def within(self, subspace):
-        in_subspace = [True if x in subspace else False for x in self.x]
-        return Spectrum(x=self.x[in_subspace], y=self.y[in_subspace],
-                        curve=self.curve, focus=subspace)
+    def within(self, subset):
+        in_subset = [True if x in subset else False for x in self.x]
+        return Spectrum(self.x[in_subset], self.y[in_subset], curve=self.curve,
+                        focus=subset, sigma_type=self.sigma_type)
 
     def focus_on_edge(self, length=1):
         sub1 = LineSubset(min(self.x), min(self.x) + length)
@@ -69,4 +69,3 @@ class Spectrum:
     def focus_on_points(self, points, width=1.0):
         points_area = LineSubset([(p - width/2, p + width/2) for p in points])
         self.focus = points_area * self.domain
-

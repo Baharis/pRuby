@@ -4,8 +4,6 @@ import uncertainties as uc
 PADX = 1
 PADY = 0
 WIDTH = 24
-SIDEFRAC = 0.15
-MIDFRAC = 0.70
 
 
 class FilenameEntry(tk.Frame):
@@ -44,7 +42,6 @@ class UfloatEntry(tk.Frame):
         self.unit = tk.Label(self, text=unit)
         self.unit.config(width=int(0.15*WIDTH), justify=tk.CENTER)
         self.unit.grid(row=1, column=3, padx=PADX, pady=PADY)
-
 
     def get(self):
         try:

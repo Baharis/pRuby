@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from uncertainties import ufloat
+from uncertainties import ufloat, correlation_matrix
 from ..constants import R1_0, R2_0, T_0, UZERO, P_0
 
 
@@ -18,7 +18,7 @@ class LiuTranslatingStrategy(TemplateTranslatingStrategy):
     name = 'Liu'  # (2013)
 
     def translate(self, calc):
-        r1 = calc.r1 - calc.shift + calc.t_correction
+        r1 = calc.r1 - calc.offset + calc.t_correction
         calc.p = mao_function(r1, a=1904, b=9.827)
 
 
@@ -26,7 +26,7 @@ class MaoTranslatingStrategy(TemplateTranslatingStrategy):
     name = 'Mao'  # (1986)
 
     def translate(self, calc):
-        r1 = calc.r1 - calc.shift + calc.t_correction
+        r1 = calc.r1 - calc.offset + calc.t_correction
         calc.p = mao_function(r1, a=1904, b=7.665)
 
 
@@ -35,8 +35,14 @@ class PiermariniTranslatingStrategy(TemplateTranslatingStrategy):
     name = 'Piermarini'  # (1975)
 
     def translate(self, calc):
-        r1 = calc.r1 - calc.shift + calc.t_correction
+        r1 = calc.r1 - calc.offset + calc.t_correction
         calc.p = ufloat(2.740, 0.016) * (r1 - R1_0)
+        print('R1    : {}'.format(calc.r1))
+        print('Offset: {}'.format(calc.offset))
+        print('T_corr: {}'.format(calc.t_correction))
+        print('R1corr: {}'.format(r1))
+        print('p     : {}'.format(calc.p))
+        print(correlation_matrix([calc.r1, calc.offset, calc.t_correction, r1, calc.p]))
 
 
 class WeiTranslatingStrategy(TemplateTranslatingStrategy):
@@ -44,7 +50,7 @@ class WeiTranslatingStrategy(TemplateTranslatingStrategy):
     name = 'Wei'  # (2011)
 
     def translate(self, calc):
-        r1 = calc.r1 - calc.shift
+        r1 = calc.r1 - calc.offset
         a300 = ufloat(1915.0, 0.9)
         a1 = ufloat(0.622, 0.007)
         b300 = ufloat(9.28, 0.02)

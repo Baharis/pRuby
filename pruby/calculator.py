@@ -22,23 +22,26 @@ class PressureCalculator:
         self.t = T_0
         self.t_ref = T_0
         self.t_correction = 0.0
-        self.shift = 0.0
+        self.offset = 0.0
         self.p = P_0
+        self.calculate_p_from_r1()
         self.fig, self.ax = None, None
         self.color_cycle = cycle('r', 'g', 'b', 'c', 'm', 'y')
         self.color = 'k'
 
-    def set_currect_as_reference(self):
+    def set_current_as_reference(self):
         self.r1_ref = self.r1
         self.t_ref = self.t
-        self.recalculate_shift()
+        self.calculate_p_from_r1()
+        self.calculate_offset_from_reference()
+        self.calculate_p_from_r1()
 
-    def recalculate_shift(self):
+    def calculate_offset_from_reference(self):
         backupped_values = self.r1, self.t, self.p
-        self.shift, self.r1_ref = 0.0, self.r1_ref
+        self.offset = ufloat(0.00, 0.01)
         self.t, self.p = self.t_ref, P_0
         self.calculate_r1_from_p()
-        self.shift = self.r1_ref - self.r1
+        self.offset = self.r1_ref - self.r1
         self.r1, self.t, self.p = backupped_values
 
     def read_and_fit(self):
@@ -48,7 +51,12 @@ class PressureCalculator:
 
     def calculate_p_from_r1(self):
         self.strategy.correct()
+        # print('**********')
+        # for k, v in self.__dict__.items():
+        #     print('{k}: {v}'.format(k=k, v=v))
         self.strategy.translate()
+        # for k, v in self.__dict__.items():
+        #     print('{k}: {v}'.format(k=k, v=v))
 
     def calculate_r1_from_p(self):
         target_p, self.p = self.p, self.p - 100
@@ -71,7 +79,3 @@ class PressureCalculator:
             self.strategy.draw()
         else:
             raise AttributeError('The peak spectrum is empty')
-
-
-# TODO: after initiating calculator and closing initial window,
-# TODO: some re-initiation must be done if window has been closed, as it's blank

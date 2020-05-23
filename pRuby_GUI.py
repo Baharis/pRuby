@@ -3,8 +3,8 @@ import tkinter as tk
 from natsort import natsorted
 from pruby.constants import R1_0, T_0, P_0
 from pruby.calculator import PressureCalculator
-from pruby.tkobjects import StatusBar, open_file_dialogue, show_about
-from pruby.tkobjects.gridable import UfloatEntry, FilenameEntry
+from pruby.tkobjects import FilenameEntry, UfloatEntry, StatusBar,\
+    open_file_dialogue, show_about
 
 
 class Application(tk.Frame):
@@ -20,6 +20,7 @@ class Application(tk.Frame):
         self.p_ref = P_0
         self.autodraw = tk.BooleanVar(value=False)
         self.calc = PressureCalculator()
+        self.ref = PressureCalculator()
 
         # method string variables
         self.reading_strategy = tk.StringVar(
@@ -95,8 +96,8 @@ class Application(tk.Frame):
         self.status_bar.grid(row=4, column=0, columnspan=4)
 
         # FINAL SETUP
-        self.recalculate_p()
         self.set_methods()
+        self.save_reference()  # ran to update correlation b/ temp corr and r1!
         self.display('Ready...')
 
     def display(self, message):
@@ -167,7 +168,7 @@ class Application(tk.Frame):
         self.calc.r1 = self.r1_ref = self.r1.get()
         self.calc.t = self.t_ref = self.t.get()
         self.calc.p = self.p_ref = self.p.get()
-        self.calc.set_currect_as_reference()
+        self.calc.set_current_as_reference()
         self.recalculate_p()
         self.display('R1 & T saved as reference for p=0.')
 
@@ -195,7 +196,12 @@ class Application(tk.Frame):
             correcting=self.correcting_strategy.get(),
             translating=self.translating_strategy.get(),
             drawing=self.drawing_strategy.get())
-        self.calc.recalculate_shift()
+        self.calc.calculate_offset_from_reference()
+        try:
+            self.calc.read_and_fit()
+            self.r1.set(value=self.calc.r1)
+        except OSError:
+            pass
         self.recalculate_p()
 
     def data_draw(self):

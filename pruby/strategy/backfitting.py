@@ -1,7 +1,7 @@
 import copy
 from abc import abstractmethod
 from scipy.optimize import curve_fit
-from ..utility.maths import polynomial
+from ..utility.functions import polynomial
 from ..spectrum import Curve
 
 

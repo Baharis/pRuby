@@ -45,7 +45,11 @@ class TemplateDrawingStrategy:
         calc.ax.axvline(x, color=calc.color)
 
     @staticmethod
-    def draw_finalize():
+    def draw_finalize(calc):
+        calc.ax.set_xlim([min(calc.peak_spectrum.x), max(calc.peak_spectrum.x)])
+        calc.ax.annotate('nm', xy=(1, 0), ha='left', va='top',
+                         xytext=(10, - 3 - mpl.rcParams['xtick.major.pad']),
+                         xycoords='axes fraction', textcoords='offset points')
         plt.legend()
         plt.show(block=False)
 
@@ -60,11 +64,7 @@ class ComplexDrawingStrategy(TemplateDrawingStrategy):
         self.draw_curve(calc, calc.back_spectrum, bg=True)
         self.draw_vline(calc, calc.r1.n)
         self.draw_vline(calc, calc.r2.n)
-        calc.ax.set_xlim([min(calc.peak_spectrum.x), max(calc.peak_spectrum.x)])
-        calc.ax.annotate('nm', xy=(1, 0), ha='left', va='top',
-                         xytext=(10, - 3 - mpl.rcParams['xtick.major.pad']),
-                         xycoords='axes fraction', textcoords='offset points')
-        self.draw_finalize()
+        self.draw_finalize(calc)
 
 
 class SimpleDrawingStrategy(TemplateDrawingStrategy):
@@ -74,11 +74,7 @@ class SimpleDrawingStrategy(TemplateDrawingStrategy):
         self.draw_initialize(calc)
         self.draw_spectrum(calc, calc.peak_spectrum.x, calc.peak_spectrum.y)
         self.draw_vline(calc, calc.r1.n)
-        calc.ax.set_xlim([min(calc.peak_spectrum.x), max(calc.peak_spectrum.x)])
-        calc.ax.annotate('nm', xy=(1, 0), ha='left', va='top',
-                         xytext=(10, - 3 - mpl.rcParams['xtick.major.pad']),
-                         xycoords='axes fraction', textcoords='offset points')
-        self.draw_finalize()
+        self.draw_finalize(calc)
 
 
 # So seemingly the application breaks if matplotlib objects are created before
