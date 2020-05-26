@@ -58,9 +58,9 @@ class Spectrum:
         return Spectrum(self.x[in_subset], self.y[in_subset], curve=self.curve,
                         focus=subset, sigma_type=self.sigma_type)
 
-    def focus_on_edge(self, length=1):
-        sub1 = LineSubset(min(self.x), min(self.x) + length)
-        sub2 = LineSubset(max(self.x) - length, max(self.x))
+    def focus_on_edge(self, width=1):
+        sub1 = LineSubset(min(self.x), min(self.x) + width)
+        sub2 = LineSubset(max(self.x) - width, max(self.x))
         self.focus = sub1 + sub2
 
     def focus_on_whole(self):

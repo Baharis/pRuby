@@ -51,5 +51,5 @@ class SateliteBackfittingStrategy(TemplateBackfittingStrategy):
     def _prepare_backfit(self, calc):
         calc.back_spectrum = copy.deepcopy(calc.raw_spectrum)
         self._approximate_linearly(calc.back_spectrum)
-        calc.back_spectrum.focus_on_edge(length=1.0)
+        calc.back_spectrum.focus_on_edge(width=1.0)
         calc.back_spectrum.sigma_type = 'equal'

@@ -39,8 +39,11 @@ class TestSpectrum(unittest.TestCase):
     def test_creation_with_custom_focus(self):
         self.assertIsNotNone(Spectrum(self.x, self.y, focus=LineSubset()))
 
-    def test_creation_with_custom_sigma_type(self):
+    def test_creation_with_equal_sigma_type(self):
         self.assertIsNotNone(Spectrum(self.x, self.y, sigma_type='equal'))
+
+    def test_creation_with_huber_sigma_type(self):
+        self.assertIsNotNone(Spectrum(self.x, self.y, sigma_type='huber'))
 
     def test_length(self):
         self.assertEqual(len(Spectrum(self.x, self.y)), 3)
@@ -59,13 +62,43 @@ class TestSpectrum(unittest.TestCase):
         self.assertAlmostEqual(
             sum(Spectrum(self.x, self.y, curve=Curve(lambda x: x)).delta), 4.2)
 
-    def test_si(self):
+    def test_si_equal(self):
         self.assertAlmostEqual(
             sum(Spectrum(self.x, self.y, curve=Curve(lambda x: x)).si), 3.0)
 
+    def test_si_huber(self):
+        self.assertAlmostEqual(5.4768,
+            sum(Spectrum(self.x, self.y, sigma_type='huber').si))
+
     def test_mse(self):
         self.assertAlmostEqual(
-            sum(Spectrum(self.x, self.y, curve=Curve(lambda x: x)).si), 3.0)
+            Spectrum(self.x, self.y, curve=Curve(lambda x: x)).mse, 2.92)
+
+    def test_domain(self):
+        self.assertEqual(Spectrum(self.x, self.y).domain, LineSubset(1.0, 3.0))
+
+    def test_focused(self):
+        self.assertAlmostEqual(4.6,
+            sum(Spectrum(self.x, self.y, focus=LineSubset(0.5, 2.5)).focused.y))
+
+    def test_within(self):
+        self.assertAlmostEqual(
+            sum(Spectrum(self.x, self.y).within(LineSubset(0.5, 2.5)).y), 4.6)
+
+    def test_focus_on_edge(self):
+        spectrum = Spectrum(self.x, self.y)
+        spectrum.focus_on_edge(width=0.5)
+        self.assertAlmostEqual(sum(spectrum.focused.y), 6.8)
+
+    def test_focus_on_whole(self):
+        spectrum = Spectrum(self.x, self.y)
+        spectrum.focus_on_whole()
+        self.assertAlmostEqual(sum(spectrum.focused.y), 10.2)
+
+    def test_focus_on_points(self):
+        spectrum = Spectrum(self.x, self.y)
+        spectrum.focus_on_points(points=(2.0,), width=1.5)
+        self.assertAlmostEqual(sum(spectrum.focused.y), 3.4)
 
 
 if __name__ == '__main__':
