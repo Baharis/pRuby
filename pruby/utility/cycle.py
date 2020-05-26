@@ -1,5 +1,4 @@
-def cycle(*iterable, start=0):
-    n = start
+def cycle(iterable, start=0):
     while True:
-        yield iterable[n % len(iterable)]
-        n += 1
+        yield iterable[start % len(iterable)]
+        start += 1

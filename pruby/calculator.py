@@ -26,7 +26,7 @@ class PressureCalculator:
         self.p = P_0
         self.calculate_p_from_r1()
         self.fig, self.ax = None, None
-        self.color_cycle = cycle('r', 'g', 'b', 'c', 'm', 'y')
+        self.color_cycle = cycle('rgbcmy')
         self.color = 'k'
 
     def set_current_as_reference(self):
