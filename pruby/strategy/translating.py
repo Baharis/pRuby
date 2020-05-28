@@ -37,12 +37,6 @@ class PiermariniTranslatingStrategy(TemplateTranslatingStrategy):
     def translate(self, calc):
         r1 = calc.r1 - calc.offset + calc.t_correction
         calc.p = ufloat(2.740, 0.016) * (r1 - R1_0)
-        print('R1    : {}'.format(calc.r1))
-        print('Offset: {}'.format(calc.offset))
-        print('T_corr: {}'.format(calc.t_correction))
-        print('R1corr: {}'.format(r1))
-        print('p     : {}'.format(calc.p))
-        print(correlation_matrix([calc.r1, calc.offset, calc.t_correction, r1, calc.p]))
 
 
 class WeiTranslatingStrategy(TemplateTranslatingStrategy):

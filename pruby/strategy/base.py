@@ -27,18 +27,21 @@ class Strategy:
 
     def set(self, reading='', backfitting='', peakfitting='',
             correcting='', translating='', drawing=''):
-        for r in self.readers:
-            self.reader = r if r.name == reading else self.reader
-        for b in self.backfitters:
-            self.backfitter = b if b.name == backfitting else self.backfitter
-        for p in self.peakfitters:
-            self.peakfitter = p if p.name == peakfitting else self.peakfitter
-        for c in self.correctors:
-            self.corrector = c if c.name == correcting else self.corrector
-        for t in self.translators:
-            self.translator = t if t.name == translating else self.translator
-        for d in self.drawers:
-            self.drawer = d if d.name == drawing else self.drawer
+        self._set_strategy(reading, 'reader')
+        self._set_strategy(backfitting, 'backfitter')
+        self._set_strategy(peakfitting, 'peakfitter')
+        self._set_strategy(correcting, 'corrector')
+        self._set_strategy(translating, 'translator')
+        self._set_strategy(drawing, 'drawer')
+
+    def _set_strategy(self, key, strategy_type):
+        if key is '':
+            return
+        for strategy in getattr(self, strategy_type + 's'):
+            if strategy.name == key:
+                setattr(self, strategy_type, strategy)
+                return
+        raise KeyError('Unknown strategy name "{}"'.format(key))
 
     def read(self):
         self.reader.read(self.calc)

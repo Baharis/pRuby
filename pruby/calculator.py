@@ -5,7 +5,6 @@ from .utility import cycle, LineSubset
 from .constants import P_0, R1_0, R2_0, T_0
 
 
-# TODO work further here (dynamic inheritance) after upgrading routine_manager
 class PressureCalculator:
     def __init__(self):
         # initializing strategies
@@ -51,12 +50,7 @@ class PressureCalculator:
 
     def calculate_p_from_r1(self):
         self.strategy.correct()
-        # print('**********')
-        # for k, v in self.__dict__.items():
-        #     print('{k}: {v}'.format(k=k, v=v))
         self.strategy.translate()
-        # for k, v in self.__dict__.items():
-        #     print('{k}: {v}'.format(k=k, v=v))
 
     def calculate_r1_from_p(self):
         target_p, self.p = self.p, self.p - 100
