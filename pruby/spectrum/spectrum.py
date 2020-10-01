@@ -32,7 +32,7 @@ class Spectrum:
         if self.sigma_type == 'equal':
             return np.ones_like(self.x)
         elif self.sigma_type == 'huber':
-            tol = 0.05 * max(abs(self.delta))
+            tol = 0.01 * max(abs(self.delta))
             return np.array([tol ** 2 if d < tol else
                              tol * (2 * d - tol) for d in self.delta])
         else:

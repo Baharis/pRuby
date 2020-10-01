@@ -26,7 +26,6 @@ class TemplateDrawingStrategy:
         plt.grid(b=True, axis='y', which='major', color='gray', alpha=0.2)
         plt.tick_params(axis='x', which='minor', bottom=True)
 
-
     @staticmethod
     def draw_spectrum(calc, x, y):
         lab = str(calc.p if not calc.filename else calc.filename)

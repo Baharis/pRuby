@@ -9,7 +9,7 @@ class TemplateBackfittingStrategy:
     @staticmethod
     def _approximate_linearly(spectrum):
         def linear_function(x, _a0, _a1):
-            return polynomial(a0, a1)(x)
+            return polynomial(_a0, _a1)(x)
         a1 = (spectrum.y[-1] - spectrum.y[0]) / (spectrum.x[-1] - spectrum.x[0])
         a0 = spectrum.y[0] - a1 * spectrum.x[0]
         spectrum.curve = Curve(func=linear_function, args=(a0, a1))
