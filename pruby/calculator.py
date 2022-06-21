@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import uncertainties as uc
 from pruby.strategy import Strategy
 from pruby.spectrum import Spectrum
-from pruby.utility import cycle, LineSubset
+from pruby.utility import LineSubset
 from pruby.constants import P_0, R1_0, R2_0, T_0
 
 
@@ -27,11 +27,6 @@ class PressureCalculator:
         self.offset = 0.0
         self.calculate_p_from_r1()
         self.fig: plt.Figure = plt.Figure()
-        #self.color_cycle = cycle('rgbcmy')
-        self.color_cycle = cycle(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
-                                  '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
-                                  '#bcbd22', '#17becf'])
-        self.color = 'k'
 
     @staticmethod
     def convert_to_ufloat(value):
@@ -138,3 +133,17 @@ class PressureCalculator:
             self.strategy.draw()
         else:
             raise AttributeError('The peak spectrum is empty')
+
+
+if __name__ == '__main__':
+    c = PressureCalculator()
+    c.read('/home/dtchon/git/pRuby/r27.txt')
+    c.calculate_p_from_r1()
+    print(c.p)
+    c.set_current_as_reference()
+    c.draw()
+    c.read('/home/dtchon/git/pRuby/r27.txt')
+    c.calculate_p_from_r1()
+    print(c.p)
+    c.strategy.set(drawing='Simple')
+    c.draw()

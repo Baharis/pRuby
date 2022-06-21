@@ -1,14 +1,19 @@
 from abc import abstractmethod
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from pruby.utility import cycle
 
 
-class TemplateDrawingStrategy:
+class BaseDrawingStrategy:
+    color_cycle = cycle(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+                         '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
+
     def __init__(self):
         self.calc = None
         self.fig: plt.Figure
         self.ax: plt.Axes
         self.fig, self.ax = plt.subplots()
+        self.color = '#000000'
 
     @abstractmethod
     def draw(self, calc):
@@ -20,7 +25,7 @@ class TemplateDrawingStrategy:
             self.draw_new_figure()
         elif not plt.fignum_exists(self.calc.fig.number):
             self.draw_new_figure()
-        self.calc.color = next(self.calc.color_cycle)
+        self.color = next(self.color_cycle)
 
     def draw_new_figure(self):
         mpl.use('TkAgg')
@@ -33,17 +38,17 @@ class TemplateDrawingStrategy:
 
     def draw_spectrum(self, x, y):
         lab = str(self.calc.p if not self.calc.dat_path else self.calc.dat_path)
-        self.ax.plot(x, y, self.calc.color, marker='.', ls='None', label=lab)
+        self.ax.plot(x, y, self.color, marker='.', ls='None', label=lab)
 
     def draw_curve(self, spectrum, bg=False):
         y = -spectrum.f if bg else spectrum.f
         ls = '--' if bg else '-'
-        self.ax.plot(spectrum.x, y, self.calc.color, ls=ls)
-        self.ax.fill_between(x=spectrum.x, y1=y, color=self.calc.color, alpha=0.2,
+        self.ax.plot(spectrum.x, y, self.color, ls=ls)
+        self.ax.fill_between(x=spectrum.x, y1=y, color=self.color, alpha=0.2,
                              where=[_ in spectrum.focus for _ in spectrum.x])
 
     def draw_vline(self, x):
-        self.ax.axvline(x, color=self.calc.color)
+        self.ax.axvline(x, color=self.color)
 
     def draw_finalize(self):
         self.ax.set_xlim([min(self.calc.peak_spectrum.x),
@@ -56,7 +61,7 @@ class TemplateDrawingStrategy:
         plt.show(block=True)  # this should change in gui and line
 
 
-class ComplexDrawingStrategy(TemplateDrawingStrategy):
+class ComplexDrawingStrategy(BaseDrawingStrategy):
     name = 'Traditional'
 
     def draw(self, calc):
@@ -69,7 +74,7 @@ class ComplexDrawingStrategy(TemplateDrawingStrategy):
         self.draw_finalize()
 
 
-class SimpleDrawingStrategy(TemplateDrawingStrategy):
+class SimpleDrawingStrategy(BaseDrawingStrategy):
     name = 'Simple'
 
     def draw(self, calc):
@@ -77,8 +82,3 @@ class SimpleDrawingStrategy(TemplateDrawingStrategy):
         self.draw_spectrum(calc.peak_spectrum.x, calc.peak_spectrum.y)
         self.draw_vline(calc.r1.n)
         self.draw_finalize()
-
-
-# So seemingly the application breaks if matplotlib objects are created before
-# the tk object. Most likely a default root of mpl is made before explicit root
-# of tk and variables are bound there. Details: bugs.python.org/issue38292.
