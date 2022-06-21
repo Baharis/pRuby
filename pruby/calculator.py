@@ -1,8 +1,8 @@
 import uncertainties as uc
-from .strategy import Strategy
-from .spectrum import Spectrum
-from .utility import cycle, LineSubset
-from .constants import P_0, R1_0, R2_0, T_0
+from pruby.strategy import Strategy
+from pruby.spectrum import Spectrum
+from pruby.utility import cycle, LineSubset
+from pruby.constants import P_0, R1_0, R2_0, T_0
 
 
 class PressureCalculator:
