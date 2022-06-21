@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import uncertainties as uc
 from pruby.strategy import Strategy
 from pruby.spectrum import Spectrum
@@ -25,7 +26,7 @@ class PressureCalculator:
         self.t_correction = 0.0
         self.offset = 0.0
         self.calculate_p_from_r1()
-        self.fig, self.ax = None, None
+        self.fig: plt.Figure = plt.Figure()
         #self.color_cycle = cycle('rgbcmy')
         self.color_cycle = cycle(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
                                   '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
