@@ -26,80 +26,6 @@ class PressureCalculator:
         self.fig: plt.Figure = plt.Figure()
         self.calculate_p_from_r1()
 
-    @staticmethod
-    def convert_to_ufloat(value):
-        if isinstance(value, (uc.core.Variable, uc.core.AffineScalarFunc)):
-            return value
-        elif isinstance(value, float):
-            return uc.ufloat(value)
-        else:
-            m = 'Assigned value {} should be float or ufloat'.format(str(value))
-            raise TypeError(m)
-
-    @property
-    def r1(self):
-        return self._r1
-
-    @r1.setter
-    def r1(self, value):
-        self._r1 = self.convert_to_ufloat(value)
-
-    @property
-    def r2(self):
-        return self._r2
-
-    @r2.setter
-    def r2(self, value):
-        self._r2 = self.convert_to_ufloat(value)
-
-    @property
-    def r1_ref(self):
-        return self._r1_ref
-
-    @r1_ref.setter
-    def r1_ref(self, value):
-        self._r1_ref = self.convert_to_ufloat(value)
-
-    @property
-    def t(self):
-        return self._t
-
-    @t.setter
-    def t(self, value):
-        self._t = self.convert_to_ufloat(value)
-
-    @property
-    def t_ref(self):
-        return self._t_ref
-
-    @t_ref.setter
-    def t_ref(self, value):
-        self._t_ref = self.convert_to_ufloat(value)
-
-    @property
-    def t_correction(self):
-        return self._t_correction
-
-    @t_correction.setter
-    def t_correction(self, value):
-        self._t_correction = self.convert_to_ufloat(value)
-
-    @property
-    def offset(self):
-        return self._offset
-
-    @offset.setter
-    def offset(self, value):
-        self._offset = self.convert_to_ufloat(value)
-
-    @property
-    def p(self):
-        return self._p
-
-    @p.setter
-    def p(self, value):
-        self._p = self.convert_to_ufloat(value)
-
     def set_current_as_reference(self):
         self.r1_ref = self.r1
         self.t_ref = self.t
@@ -127,7 +53,7 @@ class PressureCalculator:
         self.strategy.translate()
 
     def calculate_r1_from_p(self):
-        target_p, self.p = self.p, self.p - 100
+        target_p, self.p = self.p, self.p - 100.0
         precision, r_step_size = 10 ** -4, 1.0
         self.r1 = uc.ufloat(self.r1.n, precision)
         while True:
