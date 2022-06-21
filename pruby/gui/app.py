@@ -133,8 +133,7 @@ class Application(tk.Frame):
         if filename is '':
             return
         try:
-            self.calc.filename = filename
-            self.calc.read_and_fit()
+            self.calc.read(filename)
         except RuntimeError:
             self.display('Fitting spectrum failed!')
             return
@@ -197,7 +196,7 @@ class Application(tk.Frame):
             drawing=self.drawing_strategy.get())
         self.calc.calculate_offset_from_reference()
         try:
-            self.calc.read_and_fit()
+            self.calc.read()
             self.r1.set(value=self.calc.r1)
         except OSError:
             pass

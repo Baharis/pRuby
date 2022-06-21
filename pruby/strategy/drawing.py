@@ -28,7 +28,7 @@ class TemplateDrawingStrategy:
 
     @staticmethod
     def draw_spectrum(calc, x, y):
-        lab = str(calc.p if not calc.filename else calc.filename)
+        lab = str(calc.p if not calc.dat_path else calc.dat_path)
         calc.ax.plot(x, y, calc.color, marker='.', ls='None', label=lab)
 
     @staticmethod

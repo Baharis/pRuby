@@ -10,17 +10,18 @@ class PressureCalculator:
         # initializing strategies
         self.strategy = Strategy(self)
         # initializing variables
-        self.filename = ''
+        self.dat_path = ''
+        self.ref_path = ''
         self.limits = LineSubset(690.0, 705.0)
         self.raw_spectrum = Spectrum()
         self.back_spectrum = Spectrum()
         self.peak_spectrum = Spectrum()
-        self.__r1 = R1_0
-        self.__r2 = R2_0
-        self.__r1_ref = R1_0
-        self.__t = T_0
-        self.__t_ref = T_0
-        self.__p = P_0
+        self._r1 = R1_0
+        self._r2 = R2_0
+        self._r1_ref = R1_0
+        self._t = T_0
+        self._t_ref = T_0
+        self._p = P_0
         self.t_correction = 0.0
         self.offset = 0.0
         self.calculate_p_from_r1()
@@ -43,55 +44,56 @@ class PressureCalculator:
 
     @property
     def r1(self):
-        return self.__r1
+        return self._r1
 
     @r1.setter
     def r1(self, value):
-        self.__r1 = self.convert_to_ufloat(value)
+        self._r1 = self.convert_to_ufloat(value)
 
     @property
     def r2(self):
-        return self.__r2
+        return self._r2
 
     @r2.setter
     def r2(self, value):
-        self.__r2 = self.convert_to_ufloat(value)
+        self._r2 = self.convert_to_ufloat(value)
 
     @property
     def r1_ref(self):
-        return self.__r1_ref
+        return self._r1_ref
 
     @r1_ref.setter
     def r1_ref(self, value):
-        self.__r1_ref = self.convert_to_ufloat(value)
+        self._r1_ref = self.convert_to_ufloat(value)
 
     @property
     def t(self):
-        return self.__t
+        return self._t
 
     @t.setter
     def t(self, value):
-        self.__t = self.convert_to_ufloat(value)
+        self._t = self.convert_to_ufloat(value)
 
     @property
     def t_ref(self):
-        return self.__t_ref
+        return self._t_ref
 
     @t_ref.setter
     def t_ref(self, value):
-        self.__t_ref = self.convert_to_ufloat(value)
+        self._t_ref = self.convert_to_ufloat(value)
 
     @property
     def p(self):
-        return self.__p
+        return self._p
 
     @p.setter
     def p(self, value):
-        self.__p = self.convert_to_ufloat(value)
+        self._p = self.convert_to_ufloat(value)
 
     def set_current_as_reference(self):
         self.r1_ref = self.r1
         self.t_ref = self.t
+        self.ref_path = self.dat_path
         self.calculate_p_from_r1()
         self.calculate_offset_from_reference()
         self.calculate_p_from_r1()
@@ -104,7 +106,8 @@ class PressureCalculator:
         self.offset = self.r1_ref - self.r1
         self.r1, self.t, self.p = backupped_values
 
-    def read_and_fit(self):
+    def read(self, path: str = ''):
+        self.dat_path = path if path else self.dat_path
         self.strategy.read()
         self.strategy.backfit()
         self.strategy.peakfit()

@@ -15,7 +15,7 @@ class RawTxtReadingStrategy(ReadingStrategy):
 
     @staticmethod
     def read(calc):
-        data = np.loadtxt(calc.filename, dtype=(float, float))
+        data = np.loadtxt(calc.dat_path, dtype=(float, float))
         x_list, y_list = data[:, 0], data[:, 1]
         calc.raw_spectrum = Spectrum(x_list, y_list).within(calc.limits)
 
@@ -25,7 +25,7 @@ class MetaTxtReadingStrategy(ReadingStrategy):
 
     @staticmethod
     def read(calc):
-        with open(calc.filename, "r") as file:
+        with open(calc.dat_path, "r") as file:
             x_list, y_list = [], []
             for line in file.readlines():
                 try:

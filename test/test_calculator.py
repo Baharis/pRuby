@@ -52,33 +52,28 @@ class TestCalculator(unittest.TestCase):
 
     def test_reading_and_fitting_simple_raw_file(self):
         calc = PressureCalculator()
-        calc.filename = self._get_absolute_example_path('simple')
-        calc.read_and_fit()
+        calc.read(self._get_absolute_example_path('simple'))
         self.assertGreater(calc.r1.n, 694.0)
 
     def test_reading_and_fitting_meta_file(self):
         calc = PressureCalculator()
         calc.strategy.set(reading='Metadata txt')
-        calc.filename = self._get_absolute_example_path('meta')
-        calc.read_and_fit()
+        calc.read(self._get_absolute_example_path('meta'))
         self.assertGreater(calc.r1.n, 694.0)
 
     def test_different_fitters_give_different_r1(self):
         calc1 = PressureCalculator()
         calc2 = PressureCalculator()
         calc3 = PressureCalculator()
-        calc1.filename = self._get_absolute_example_path('simple')
-        calc2.filename = self._get_absolute_example_path('simple')
-        calc3.filename = self._get_absolute_example_path('simple')
         calc1.strategy.set(backfitting='Linear Huber',
                            peakfitting='Gaussian')
         calc2.strategy.set(backfitting='Linear Satelite',
                            peakfitting='Gaussian')
         calc3.strategy.set(backfitting='Linear Huber',
                            peakfitting='Pseudovoigt')
-        calc1.read_and_fit()
-        calc2.read_and_fit()
-        calc3.read_and_fit()
+        calc1.read(self._get_absolute_example_path('simple'))
+        calc2.read(self._get_absolute_example_path('simple'))
+        calc3.read(self._get_absolute_example_path('simple'))
         self.assertNotAlmostEqual(calc1.r1.n, calc2.r1.n)
         self.assertNotAlmostEqual(calc1.r1.n, calc3.r1.n)
 
@@ -103,8 +98,7 @@ class TestCalculator(unittest.TestCase):
 
     def test_at_least_pretends_to_draw_anything(self):
         calc = PressureCalculator()
-        calc.filename = self._get_absolute_example_path('simple')
-        calc.read_and_fit()
+        calc.read(self._get_absolute_example_path('simple'))
         calc.calculate_p_from_r1()
         calc.draw()
         self.assertIsNotNone(calc.fig)
