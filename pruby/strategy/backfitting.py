@@ -1,11 +1,22 @@
+import abc
 import copy
-from abc import abstractmethod
 from scipy.optimize import curve_fit
 from ..utility.functions import polynomial
 from ..spectrum import Curve
 
 
-class TemplateBackfittingStrategy:
+class BackfittingStrategy(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
+        pass
+
+    @abc.abstractmethod
+    def backfit(self, calc):
+        pass
+
+
+class BaseBackfittingStrategy(BackfittingStrategy, abc.ABC):
     @staticmethod
     def _approximate_linearly(spectrum):
         def linear_function(x, _a0, _a1):
@@ -14,7 +25,7 @@ class TemplateBackfittingStrategy:
         a0 = spectrum.y[0] - a1 * spectrum.x[0]
         spectrum.curve = Curve(func=linear_function, args=(a0, a1))
 
-    @abstractmethod
+    @abc.abstractmethod
     def _prepare_backfit(self, calc):
         pass
 
@@ -35,7 +46,7 @@ class TemplateBackfittingStrategy:
         calc.peak_spectrum.y = calc.raw_spectrum.y - calc.back_spectrum.y
 
 
-class HuberBackfittingStrategy(TemplateBackfittingStrategy):
+class HuberBackfittingStrategy(BaseBackfittingStrategy):
     name = 'Linear Huber'
 
     def _prepare_backfit(self, calc):
@@ -45,7 +56,7 @@ class HuberBackfittingStrategy(TemplateBackfittingStrategy):
         calc.back_spectrum.sigma_type = 'huber'
 
 
-class SateliteBackfittingStrategy(TemplateBackfittingStrategy):
+class SateliteBackfittingStrategy(BaseBackfittingStrategy):
     name = 'Linear Satelite'
 
     def _prepare_backfit(self, calc):

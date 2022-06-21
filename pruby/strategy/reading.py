@@ -1,11 +1,16 @@
-from abc import abstractmethod
+import abc
 import numpy as np
 from ..spectrum import Spectrum
 
 
-class ReadingStrategy:
+class ReadingStrategy(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
+        pass
+
     @staticmethod
-    @abstractmethod
+    @abc.abstractmethod
     def read(calc):
         pass
 

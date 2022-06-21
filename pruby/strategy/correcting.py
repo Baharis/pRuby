@@ -1,4 +1,4 @@
-from abc import abstractmethod
+import abc
 from ..utility.functions import polynomial
 from ..constants import T_0, UZERO
 
@@ -24,13 +24,18 @@ def vos_r2_shift(t):
     return 0.1 * polynomial(0.0, 6.554e-2, 8.670e-5, -1.099e-7)(t - 300.0)
 
 
-class TemplateCorrectingStrategy:
-    @abstractmethod
+class CorrectingStrategy(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
+        pass
+
+    @abc.abstractmethod
     def correct(self, calc):
         pass
 
 
-class VosR1CorrectingStrategy(TemplateCorrectingStrategy):
+class VosR1CorrectingStrategy(CorrectingStrategy):
     """Based on doi:10.1063/1.348903"""
     name = 'Vos R1'  # (1991)
 
@@ -38,7 +43,7 @@ class VosR1CorrectingStrategy(TemplateCorrectingStrategy):
         calc.t_correction = -vos_r1_shift(calc.t)
 
 
-class VosR2CorrectingStrategy(TemplateCorrectingStrategy):
+class VosR2CorrectingStrategy(CorrectingStrategy):
     """Based on doi:10.1063/1.348903"""
     name = 'Vos R2'  # (1991)
 
@@ -46,7 +51,7 @@ class VosR2CorrectingStrategy(TemplateCorrectingStrategy):
         calc.t_correction = -vos_r2_shift(calc.t)
 
 
-class VosR12CorrectingStrategy(TemplateCorrectingStrategy):
+class VosR12CorrectingStrategy(CorrectingStrategy):
     """Based on doi:10.1063/1.348903"""
     name = 'Vos average'  # (1991)
 
@@ -55,7 +60,7 @@ class VosR12CorrectingStrategy(TemplateCorrectingStrategy):
             - 0.5 * vos_r2_shift(calc.t) - 0.5 * vos_r1_shift(calc.t)
 
 
-class RaganR1CorrectingStrategy(TemplateCorrectingStrategy):
+class RaganR1CorrectingStrategy(CorrectingStrategy):
     """Based on doi:10.1063/1.351951"""
     name = 'Ragan R1'  # (1992)
 
@@ -63,7 +68,7 @@ class RaganR1CorrectingStrategy(TemplateCorrectingStrategy):
         calc.t_correction = ragan_r1_position(T_0) - ragan_r1_position(calc.t)
 
 
-class RaganR2CorrectingStrategy(TemplateCorrectingStrategy):
+class RaganR2CorrectingStrategy(CorrectingStrategy):
     """Based on doi:10.1063/1.351951"""
     name = 'Ragan R2'  # (1992)
 
@@ -71,7 +76,7 @@ class RaganR2CorrectingStrategy(TemplateCorrectingStrategy):
         calc.t_correction = ragan_r2_position(T_0) - ragan_r2_position(calc.t)
 
 
-class RaganR12CorrectingStrategy(TemplateCorrectingStrategy):
+class RaganR12CorrectingStrategy(CorrectingStrategy):
     """Based on doi:10.1063/1.351951"""
     name = 'Ragan average'  # (1992)
 
@@ -80,7 +85,7 @@ class RaganR12CorrectingStrategy(TemplateCorrectingStrategy):
                              ragan_r2_position(T_0)-ragan_r2_position(calc.t))/2
 
 
-class NoneCorrectingStrategy(TemplateCorrectingStrategy):
+class NoneCorrectingStrategy(CorrectingStrategy):
     name = 'None'
 
     def correct(self, calc):
