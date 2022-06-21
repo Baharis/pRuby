@@ -3,30 +3,28 @@ import uncertainties as uc
 from pruby.strategy import Strategy
 from pruby.spectrum import Spectrum
 from pruby.utility import LineSubset
-from pruby.constants import P_0, R1_0, R2_0, T_0
+from pruby.constants import P_0, R1_0, R2_0, T_0, UZERO
 
 
 class PressureCalculator:
     def __init__(self):
-        # initializing strategies
-        self.strategy = Strategy(self)
-        # initializing variables
-        self.dat_path = ''
-        self.ref_path = ''
-        self.limits = LineSubset(690.0, 705.0)
-        self.raw_spectrum = Spectrum()
-        self.back_spectrum = Spectrum()
-        self.peak_spectrum = Spectrum()
-        self._r1 = R1_0
-        self._r2 = R2_0
-        self._r1_ref = R1_0
-        self._t = T_0
-        self._t_ref = T_0
-        self._p = P_0
-        self.t_correction = 0.0
-        self.offset = 0.0
-        self.calculate_p_from_r1()
+        self.strategy: Strategy = Strategy(self)
+        self.dat_path: str = ''
+        self.ref_path: str = ''
+        self.limits: LineSubset = LineSubset(690.0, 705.0)
+        self.raw_spectrum: Spectrum = Spectrum()
+        self.back_spectrum: Spectrum = Spectrum()
+        self.peak_spectrum: Spectrum = Spectrum()
+        self.r1: uc.UFloat = R1_0
+        self.r2: uc.UFloat = R2_0
+        self.r1_ref: uc.UFloat = R1_0
+        self.t: uc.UFloat = T_0
+        self.t_ref: uc.UFloat = T_0
+        self.p: uc.UFloat = P_0
+        self.t_correction: uc.UFloat = UZERO
+        self.offset: uc.UFloat = UZERO
         self.fig: plt.Figure = plt.Figure()
+        self.calculate_p_from_r1()
 
     @staticmethod
     def convert_to_ufloat(value):
@@ -77,6 +75,22 @@ class PressureCalculator:
     @t_ref.setter
     def t_ref(self, value):
         self._t_ref = self.convert_to_ufloat(value)
+
+    @property
+    def t_correction(self):
+        return self._t_correction
+
+    @t_correction.setter
+    def t_correction(self, value):
+        self._t_correction = self.convert_to_ufloat(value)
+
+    @property
+    def offset(self):
+        return self._offset
+
+    @offset.setter
+    def offset(self, value):
+        self._offset = self.convert_to_ufloat(value)
 
     @property
     def p(self):
