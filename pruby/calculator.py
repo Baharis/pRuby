@@ -53,10 +53,12 @@ class PressureCalculator:
         self.strategy.translate()
 
     def calculate_r1_from_p(self):
-        target_p, self.p = self.p, self.p - 100.0
-        precision, r_step_size = 10 ** -4, 1.0
+        target_p = self.p
+        self.p = self.p - uc.ufloat(100, 0)
+        precision = 0.0001
+        r_step_size = uc.ufloat(1.0, 0)
         self.r1 = uc.ufloat(self.r1.n, precision)
-        while True:
+        for _ in range(100):
             previous_p = self.p
             self.calculate_p_from_r1()
             if abs(target_p - self.p) < precision:
