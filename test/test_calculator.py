@@ -1,8 +1,14 @@
+import pathlib
 import unittest
-import os
+
 from pruby.calculator import PressureCalculator
 
 
+test_data1_path = str(pathlib.Path(__file__).parent.joinpath('test_data1.txt'))
+test_data2_path = str(pathlib.Path(__file__).parent.joinpath('test_data2.txt'))
+
+
+# noinspection PyTypeChecker
 class TestCalculator(unittest.TestCase):
     def test_create_empty(self):
         self.assertIsNotNone(PressureCalculator())
@@ -41,24 +47,15 @@ class TestCalculator(unittest.TestCase):
         calc.calculate_r1_from_p()
         self.assertLess(calc.r1, 693.0)
 
-    @staticmethod
-    def _get_absolute_example_path(typ_):
-        test_wd = os.path.dirname(os.path.realpath(__file__))
-        example_wd = os.path.join(test_wd, '..', 'resources')
-        if typ_ == 'simple':
-            return os.path.join(example_wd, 'example1.txt')
-        else:
-            return os.path.join(example_wd, 'example2.txt')
-
     def test_reading_and_fitting_simple_raw_file(self):
         calc = PressureCalculator()
-        calc.read(self._get_absolute_example_path('simple'))
+        calc.read(test_data1_path)
         self.assertGreater(calc.r1.n, 694.0)
 
     def test_reading_and_fitting_meta_file(self):
         calc = PressureCalculator()
         calc.engine.set_strategy(reading='Metadata txt')
-        calc.read(self._get_absolute_example_path('meta'))
+        calc.read(test_data2_path)
         self.assertGreater(calc.r1.n, 694.0)
 
     def test_different_fitters_give_different_r1(self):
@@ -71,9 +68,9 @@ class TestCalculator(unittest.TestCase):
                                   peakfitting='Gaussian')
         calc3.engine.set_strategy(backfitting='Linear Huber',
                                   peakfitting='Pseudovoigt')
-        calc1.read(self._get_absolute_example_path('simple'))
-        calc2.read(self._get_absolute_example_path('simple'))
-        calc3.read(self._get_absolute_example_path('simple'))
+        calc1.read(test_data1_path)
+        calc2.read(test_data1_path)
+        calc3.read(test_data1_path)
         self.assertNotAlmostEqual(calc1.r1.n, calc2.r1.n)
         self.assertNotAlmostEqual(calc1.r1.n, calc3.r1.n)
 
@@ -84,25 +81,14 @@ class TestCalculator(unittest.TestCase):
         calc1.r1, calc1.t = calc1.r1 + 2.0, calc1.t + 2.0
         calc1.r2, calc2.t = calc2.r1 + 2.0, calc2.t + 2.0
         calc1.r3, calc3.t = calc3.r1 + 2.0, calc3.t + 2.0
-        calc1.engine.set_strategy(correcting='Vos R1',
-                                  translating='Liu')
-        calc2.engine.set_strategy(correcting='Ragan R1',
-                                  translating='Liu')
-        calc3.engine.set_strategy(correcting='Vos R1',
-                                  translating='Piermarini')
+        calc1.engine.set_strategy(correcting='Vos R1', translating='Liu')
+        calc2.engine.set_strategy(correcting='Ragan R1', translating='Liu')
+        calc3.engine.set_strategy(correcting='Vos R1', translating='Piermarini')
         calc1.calculate_p_from_r1()
         calc2.calculate_p_from_r1()
         calc3.calculate_p_from_r1()
         self.assertNotAlmostEqual(calc1.p.n, calc2.p.n)
         self.assertNotAlmostEqual(calc1.p.n, calc3.p.n)
-
-    def test_at_least_pretends_to_draw_anything(self):
-        calc = PressureCalculator()
-        calc.read(self._get_absolute_example_path('simple'))
-        calc.calculate_p_from_r1()
-        calc.draw()
-        self.assertIsNotNone(calc.fig)
-        self.assertIsNotNone(calc.ax)
 
 
 if __name__ == '__main__':
