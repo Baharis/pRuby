@@ -1,42 +1,56 @@
-
+from .strategies import \
+    ReadingStrategies, \
+    BackfittingStrategies, \
+    PeakfittingStrategies, \
+    CorrectingStrategies, \
+    TranslatingStrategies, \
+    DrawingStrategies
 
 
 class Engine:
-    readers = [RawTxtReadingStrategy(), MetaTxtReadingStrategy()]
-    backfitters = [HuberBackfittingStrategy(), SateliteBackfittingStrategy()]
-    peakfitters = [GaussianPeakfittingStrategy(),
-                   PseudovoigtPeakfittingStrategy(), CamelPeakfittingStrategy()]
-    correctors = [VosR1CorrectingStrategy(), RaganR1CorrectingStrategy()]
-    translators = [LiuTranslatingStrategy(), PiermariniTranslatingStrategy(),
-                   MaoTranslatingStrategy(), WeiTranslatingStrategy()]
-    drawers = [ComplexDrawingStrategy(), SimpleDrawingStrategy()]
-
     def __init__(self, calc):
         self.calc = calc
-        self.reader = self.readers[0]
-        self.backfitter = self.backfitters[0]
-        self.peakfitter = self.peakfitters[0]
-        self.corrector = self.correctors[0]
-        self.translator = self.translators[0]
-        self.drawer = self.drawers[0]
+        self.reader = ReadingStrategies.default()
+        self.backfitter = BackfittingStrategies.default()
+        self.peakfitter = PeakfittingStrategies.default()
+        self.corrector = CorrectingStrategies.default()
+        self.translator = TranslatingStrategies.default()
+        self.drawer = DrawingStrategies.default()
 
-    def set(self, reading='', backfitting='', peakfitting='',
-            correcting='', translating='', drawing=''):
-        self._set_strategy(reading, 'reader')
-        self._set_strategy(backfitting, 'backfitter')
-        self._set_strategy(peakfitting, 'peakfitter')
-        self._set_strategy(correcting, 'corrector')
-        self._set_strategy(translating, 'translator')
-        self._set_strategy(drawing, 'drawer')
+    def set_strategy(self, reading: str = '', backfitting: str = '',
+                     peakfitting: str = '', correcting: str = '',
+                     translating: str = '', drawing: str = '') -> None:
+        """
+        Sets engine strategy using strategy name string. To change any of the
+        strategies directly using a `Strategy` object, set the value of one of:
+        `self.reader`, `self.backfitter`, `self.peakfitter`, `self.corrector`,
+        `self.translator` or `self.drawer` to a desired class instance instead.
 
-    def _set_strategy(self, key, strategy_type):
-        if key is '':
-            return
-        for strategy in getattr(self, strategy_type + 's'):
-            if strategy.name == key:
-                setattr(self, strategy_type, strategy)
-                return
-        raise KeyError('Unknown strategy name "{}"'.format(key))
+        :param reading: If given, set `self.reader` to an instance
+            of class registered in `ReadingStrategies` under this name.
+        :param backfitting: If given, set `self.backfitter` to an instance
+            of class registered in `BackfittingStrategies` under this name.
+        :param peakfitting: If given, set `self.peakfitter` to an instance
+            of class registered in `PeakfittingStrategies` under this name.
+        :param correcting: If given, set `self.corrector` to an instance
+            of class registered in `CorrectingStrategies` under this name.
+        :param translating: If given, set `self.translator` to an instance
+            of class registered in `TranslatingStrategies` under this name.
+        :param drawing: If given, set `self.drawer` to an instance
+            of class registered in `DrawingStrategies` under this name.
+        """
+        if reading:
+            self.reader = ReadingStrategies.create(name=reading)
+        if backfitting:
+            self.backfitter = BackfittingStrategies.create(name=backfitting)
+        if peakfitting:
+            self.peakfitter = PeakfittingStrategies.create(name=peakfitting)
+        if correcting:
+            self.corrector = CorrectingStrategies.create(name=correcting)
+        if translating:
+            self.translator = TranslatingStrategies.create(name=translating)
+        if drawing:
+            self.drawer = DrawingStrategies.create(name=drawing)
 
     def read(self):
         self.reader.read(self.calc)

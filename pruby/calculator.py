@@ -8,7 +8,7 @@ from pruby.constants import P_0, R1_0, R2_0, T_0, UZERO
 
 class PressureCalculator:
     def __init__(self):
-        self.engine: Engine = Engine(self)
+        self.engine: Engine = Engine(calc=self)
         self.dat_path: str = ''
         self.ref_path: str = ''
         self.limits: LineSubset = LineSubset(690.0, 705.0)
@@ -87,5 +87,5 @@ if __name__ == '__main__':
     c.read('/home/dtchon/git/pRuby/r27.txt')
     c.calculate_p_from_r1()
     print(c.p)
-    c.engine.set(drawing='Simple')
+    c.engine.set_strategy(drawing='Simple')
     c.draw()

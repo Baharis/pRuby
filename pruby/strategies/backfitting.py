@@ -13,7 +13,7 @@ class BackfittingStrategy(BaseStrategy, abc.ABC):
 
 
 class BackfittingStrategies(BaseStrategies):
-    pass
+    strategy_type = BackfittingStrategy
 
 
 class BaseBackfittingStrategy(BackfittingStrategy, abc.ABC):

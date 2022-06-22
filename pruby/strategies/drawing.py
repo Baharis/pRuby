@@ -12,7 +12,7 @@ class DrawingStrategy(BaseStrategy, abc.ABC):
 
 
 class DrawingStrategies(BaseStrategies):
-    pass
+    strategy_type = DrawingStrategy
 
 
 class BaseDrawingStrategy(DrawingStrategy, abc.ABC):

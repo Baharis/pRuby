@@ -16,7 +16,7 @@ class PeakfittingStrategy(BaseStrategy, abc.ABC):
 
 
 class PeakfittingStrategies(BaseStrategies):
-    pass
+    strategy_type = PeakfittingStrategy
 
 
 class BasePeakfittingStrategy(PeakfittingStrategy):

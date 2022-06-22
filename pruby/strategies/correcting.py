@@ -32,7 +32,7 @@ class CorrectingStrategy(BaseStrategy, abc.ABC):
 
 
 class CorrectingStrategies(BaseStrategies):
-    pass
+    strategy_type = CorrectingStrategy
 
 
 @CorrectingStrategies.register(default=True)

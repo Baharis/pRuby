@@ -18,7 +18,7 @@ class TestStrategy(unittest.TestCase):
     def test_can_set_null_strategies(self):
         s1 = Engine(calc=PressureCalculator())
         s2 = Engine(calc=PressureCalculator())
-        s1.set()
+        s1.set_strategy()
         self.assertEqual(s1.reader.name, s2.reader.name)
         self.assertEqual(s1.backfitter.name, s2.backfitter.name)
         self.assertEqual(s1.peakfitter.name, s2.peakfitter.name)
@@ -29,12 +29,12 @@ class TestStrategy(unittest.TestCase):
     def test_can_set_real_strategies(self):
         s1 = Engine(calc=PressureCalculator())
         s2 = Engine(calc=PressureCalculator())
-        s1.set(reading=Engine.readers[-1].name)
-        s1.set(peakfitting=Engine.peakfitters[-1].name)
-        s1.set(backfitting=Engine.backfitters[-1].name)
-        s1.set(correcting=Engine.correctors[-1].name)
-        s1.set(translating=Engine.translators[-1].name)
-        s1.set(drawing=Engine.drawers[-1].name)
+        s1.set_strategy(reading=Engine.readers[-1].name)
+        s1.set_strategy(peakfitting=Engine.peakfitters[-1].name)
+        s1.set_strategy(backfitting=Engine.backfitters[-1].name)
+        s1.set_strategy(correcting=Engine.correctors[-1].name)
+        s1.set_strategy(translating=Engine.translators[-1].name)
+        s1.set_strategy(drawing=Engine.drawers[-1].name)
         self.assertNotEqual(s1.reader.name, s2.reader.name)
         self.assertNotEqual(s1.backfitter.name, s2.backfitter.name)
         self.assertNotEqual(s1.peakfitter.name, s2.peakfitter.name)
@@ -45,17 +45,17 @@ class TestStrategy(unittest.TestCase):
     def test_cant_set_unexisting_strategies(self):
         s = Engine(calc=PressureCalculator())
         with self.assertRaises(KeyError):
-            s.set(reading='dummy reader name')
+            s.set_strategy(reading='dummy reader name')
         with self.assertRaises(KeyError):
-            s.set(peakfitting='dummy peakfitter name')
+            s.set_strategy(peakfitting='dummy peakfitter name')
         with self.assertRaises(KeyError):
-            s.set(backfitting='dummy backfitter name')
+            s.set_strategy(backfitting='dummy backfitter name')
         with self.assertRaises(KeyError):
-            s.set(correcting='dummy corrector name')
+            s.set_strategy(correcting='dummy corrector name')
         with self.assertRaises(KeyError):
-            s.set(translating='dummy translator name')
+            s.set_strategy(translating='dummy translator name')
         with self.assertRaises(KeyError):
-            s.set(drawing='dummy drawer name')
+            s.set_strategy(drawing='dummy drawer name')
 
 
 if __name__ == '__main__':

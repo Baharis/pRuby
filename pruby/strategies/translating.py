@@ -16,7 +16,7 @@ class TranslatingStrategy(BaseStrategy, abc.ABC):
 
 
 class TranslatingStrategies(BaseStrategies):
-    pass
+    strategy_type = TranslatingStrategy
 
 
 @TranslatingStrategies.register(default=True)

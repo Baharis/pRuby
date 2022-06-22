@@ -5,6 +5,13 @@ from ..constants import R1_0, T_0, P_0
 from ..calculator import PressureCalculator
 from . import FilenameEntry, UfloatEntry, StatusBar, open_file_dialogue, \
     show_about
+from pruby.strategies import \
+    ReadingStrategies, \
+    BackfittingStrategies, \
+    PeakfittingStrategies, \
+    CorrectingStrategies, \
+    TranslatingStrategies, \
+    DrawingStrategies
 
 
 class Application(tk.Frame):
@@ -62,21 +69,33 @@ class Application(tk.Frame):
                 value=strategy.name, variable=str_var, command=self.set_methods)
             self.menu_options.add_separator()  # separators if necessary
 
-        make_options_submenu(self.calc.engine.readers,
-                             self.reading_strategy, 'Reading')
-        make_options_submenu(self.calc.engine.backfitters,
-                             self.backfitting_strategy, 'Background fitting')
-        make_options_submenu(self.calc.engine.peakfitters,
-                             self.peakfitting_strategy, 'Spectrum fitting')
-        make_options_submenu(self.calc.engine.correctors,
-                             self.correcting_strategy, 'Temperature correction')
-        make_options_submenu(self.calc.engine.translators,
-                             self.translating_strategy, 'Pressure determination')
-        make_options_submenu(self.calc.engine.drawers,
-                             self.drawing_strategy, 'Drawing style')
+        make_options_submenu(
+            strategy_list=ReadingStrategies.registry.values(),
+            str_var=self.reading_strategy,
+            label='Reading')
+        make_options_submenu(
+            strategy_list=BackfittingStrategies.registry.values(),
+            str_var=self.backfitting_strategy,
+            label='Background fitting')
+        make_options_submenu(
+            strategy_list=PeakfittingStrategies.registry.values(),
+            str_var=self.peakfitting_strategy,
+            label='Spectrum fitting')
+        make_options_submenu(
+            strategy_list=CorrectingStrategies.registry.values(),
+            str_var=self.correcting_strategy,
+            label='Temperature correction')
+        make_options_submenu(
+            strategy_list=TranslatingStrategies.registry.values(),
+            str_var=self.translating_strategy,
+            label='Pressure determination')
+        make_options_submenu(
+            strategy_list=DrawingStrategies.registry.values(),
+            str_var=self.drawing_strategy,
+            label='Drawing style')
         self.menu.add_command(label='?', command=show_about)
 
-        # ENTRY AREA
+        # BUILDING ENTRY AREA
         self.file = FilenameEntry(self, self.file_to_previous,
                                   self.file_from_entry, self.file_to_next)
         self.file.grid(row=0, column=0, columnspan=4)
@@ -90,7 +109,7 @@ class Application(tk.Frame):
                              unit='GPa', cmd=self.recalculate_r)
         self.p.grid(row=3, column=0, columnspan=4)
 
-        # STATUS BAR
+        # BUILDING STATUS BAR
         self.status_bar = StatusBar(self)
         self.status_bar.grid(row=4, column=0, columnspan=4)
 
@@ -187,7 +206,7 @@ class Application(tk.Frame):
         return files[(len(files) + index + shift) % len(files)]
 
     def set_methods(self):
-        self.calc.engine.set(
+        self.calc.engine.set_strategy(
             reading=self.reading_strategy.get(),
             backfitting=self.backfitting_strategy.get(),
             peakfitting=self.peakfitting_strategy.get(),

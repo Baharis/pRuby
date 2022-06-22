@@ -12,7 +12,7 @@ class ReadingStrategy(BaseStrategy, abc.ABC):
 
 
 class ReadingStrategies(BaseStrategies):
-    pass
+    strategy_type = ReadingStrategy
 
 
 @ReadingStrategies.register(default=True)

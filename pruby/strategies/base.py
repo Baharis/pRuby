@@ -14,17 +14,19 @@ class BaseStrategy(abc.ABC):
 class BaseStrategies(UserDict, abc.ABC):
     """Abstract class holding individual strategies as a name: strategy dict."""
 
-    default: BaseStrategy
+    strategy_type = BaseStrategy
+    default: strategy_type = None
     registry = {}
 
     @classmethod
-    def create(cls, name: str = '') -> BaseStrategy():
+    def create(cls, name: str = '') -> strategy_type:
         strategy_class = cls.registry[name] if name else cls.default
         return strategy_class()
 
     @classmethod
     def register(cls, default: bool = False) -> Callable:
-        def decorator(decorated_strategy: BaseStrategy) -> BaseStrategy:
+        def decorator(decorated_strategy: cls.strategy_type)\
+                -> cls.strategy_type:
             name = decorated_strategy.name
             if name in cls.registry:
                 raise KeyError(f'{name} already registered in {cls.__name__}')
