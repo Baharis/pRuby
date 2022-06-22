@@ -1,11 +1,12 @@
+from typing import Callable, Iterable
 import numpy as np
 
 
 class Curve:
-    def __init__(self, func=lambda x: 0, args=tuple()):
-        self.func = func
-        self.args = args
-        self.uncs = tuple(np.zeros_like(args))
+    def __init__(self, func: Callable = lambda x: 0, args=tuple()):
+        self.func: Callable = func
+        self.args: Iterable = args
+        self.uncs: tuple = tuple(np.zeros_like(args))
 
     def __call__(self, *args):
         x, args = self._interpret_call(args)
@@ -21,5 +22,5 @@ class Curve:
             try:
                 args[i] = a
             except IndexError:
-                raise ValueError('Too many argument provided to the function')
+                raise ValueError('Too many arguments provided to the function')
         return call_x, args
