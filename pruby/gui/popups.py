@@ -17,7 +17,3 @@ def show_about():
               '(https://github.com/Baharis/pRuby)' \
               'or contact dtchon(at)chem.uw.edu.pl.'
     mb.showinfo(title='About pRuby', message=message)
-
-
-def show_error(message):
-    mb.showerror(message=message)

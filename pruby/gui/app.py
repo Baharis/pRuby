@@ -1,10 +1,10 @@
 import os
 import tkinter as tk
 from natsort import natsorted
-from ..constants import R1_0, T_0, P_0
-from ..calculator import PressureCalculator
-from . import FilenameEntry, UfloatEntry, StatusBar, open_file_dialogue, \
-    show_about
+from pruby.constants import R1_0, T_0, P_0
+from pruby.calculator import PressureCalculator
+from pruby.gui.gridable import FilenameEntry, UfloatEntry, StatusBar
+from pruby.gui.popups import open_file_dialogue, show_about
 from pruby.strategies import \
     ReadingStrategies, \
     BackfittingStrategies, \
