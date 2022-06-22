@@ -1,18 +1,18 @@
 import abc
+from .base import BaseStrategy, BaseStrategies
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from pruby.utility import cycle
 
 
-class DrawingStrategy(abc.ABC):
-    @property
-    @abc.abstractmethod
-    def name(self) -> str:
-        pass
-
+class DrawingStrategy(BaseStrategy, abc.ABC):
     @abc.abstractmethod
     def draw(self, calc):
-        pass
+        raise NotImplementedError
+
+
+class DrawingStrategies(BaseStrategies):
+    pass
 
 
 class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
@@ -68,6 +68,18 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
         plt.show(block=True)  # this should change in gui and line
 
 
+@DrawingStrategies.register()
+class SimpleDrawingStrategy(BaseDrawingStrategy):
+    name = 'Simple'
+
+    def draw(self, calc):
+        self.draw_initialize(calc)
+        self.draw_spectrum(calc.peak_spectrum.x, calc.peak_spectrum.y)
+        self.draw_vline(calc.r1.n)
+        self.draw_finalize()
+
+
+@DrawingStrategies.register(default=True)
 class ComplexDrawingStrategy(BaseDrawingStrategy):
     name = 'Traditional'
 
@@ -81,11 +93,4 @@ class ComplexDrawingStrategy(BaseDrawingStrategy):
         self.draw_finalize()
 
 
-class SimpleDrawingStrategy(BaseDrawingStrategy):
-    name = 'Simple'
 
-    def draw(self, calc):
-        self.draw_initialize(calc)
-        self.draw_spectrum(calc.peak_spectrum.x, calc.peak_spectrum.y)
-        self.draw_vline(calc.r1.n)
-        self.draw_finalize()

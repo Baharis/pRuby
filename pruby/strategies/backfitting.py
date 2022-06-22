@@ -1,19 +1,19 @@
 import abc
 import copy
+from .base import BaseStrategy, BaseStrategies
 from scipy.optimize import curve_fit
 from ..utility.functions import polynomial
 from ..spectrum import Curve
 
 
-class BackfittingStrategy(abc.ABC):
-    @property
-    @abc.abstractmethod
-    def name(self) -> str:
-        pass
-
+class BackfittingStrategy(BaseStrategy, abc.ABC):
     @abc.abstractmethod
     def backfit(self, calc):
-        pass
+        raise NotImplementedError
+
+
+class BackfittingStrategies(BaseStrategies):
+    pass
 
 
 class BaseBackfittingStrategy(BackfittingStrategy, abc.ABC):
@@ -46,6 +46,7 @@ class BaseBackfittingStrategy(BackfittingStrategy, abc.ABC):
         calc.peak_spectrum.y = calc.raw_spectrum.y - calc.back_spectrum.y
 
 
+@BackfittingStrategies.register(default=True)
 class HuberBackfittingStrategy(BaseBackfittingStrategy):
     name = 'Linear Huber'
 
@@ -56,6 +57,7 @@ class HuberBackfittingStrategy(BaseBackfittingStrategy):
         calc.back_spectrum.sigma_type = 'huber'
 
 
+@BackfittingStrategies.register()
 class SateliteBackfittingStrategy(BaseBackfittingStrategy):
     name = 'Linear Satelite'
 

@@ -57,7 +57,7 @@ class TestCalculator(unittest.TestCase):
 
     def test_reading_and_fitting_meta_file(self):
         calc = PressureCalculator()
-        calc.strategy.set(reading='Metadata txt')
+        calc.engine.set(reading='Metadata txt')
         calc.read(self._get_absolute_example_path('meta'))
         self.assertGreater(calc.r1.n, 694.0)
 
@@ -65,12 +65,12 @@ class TestCalculator(unittest.TestCase):
         calc1 = PressureCalculator()
         calc2 = PressureCalculator()
         calc3 = PressureCalculator()
-        calc1.strategy.set(backfitting='Linear Huber',
-                           peakfitting='Gaussian')
-        calc2.strategy.set(backfitting='Linear Satelite',
-                           peakfitting='Gaussian')
-        calc3.strategy.set(backfitting='Linear Huber',
-                           peakfitting='Pseudovoigt')
+        calc1.engine.set(backfitting='Linear Huber',
+                         peakfitting='Gaussian')
+        calc2.engine.set(backfitting='Linear Satelite',
+                         peakfitting='Gaussian')
+        calc3.engine.set(backfitting='Linear Huber',
+                         peakfitting='Pseudovoigt')
         calc1.read(self._get_absolute_example_path('simple'))
         calc2.read(self._get_absolute_example_path('simple'))
         calc3.read(self._get_absolute_example_path('simple'))
@@ -84,12 +84,12 @@ class TestCalculator(unittest.TestCase):
         calc1.r1, calc1.t = calc1.r1 + 2.0, calc1.t + 2.0
         calc1.r2, calc2.t = calc2.r1 + 2.0, calc2.t + 2.0
         calc1.r3, calc3.t = calc3.r1 + 2.0, calc3.t + 2.0
-        calc1.strategy.set(correcting='Vos R1',
-                           translating='Liu')
-        calc2.strategy.set(correcting='Ragan R1',
-                           translating='Liu')
-        calc3.strategy.set(correcting='Vos R1',
-                           translating='Piermarini')
+        calc1.engine.set(correcting='Vos R1',
+                         translating='Liu')
+        calc2.engine.set(correcting='Ragan R1',
+                         translating='Liu')
+        calc3.engine.set(correcting='Vos R1',
+                         translating='Piermarini')
         calc1.calculate_p_from_r1()
         calc2.calculate_p_from_r1()
         calc3.calculate_p_from_r1()

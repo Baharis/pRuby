@@ -1,23 +1,23 @@
 import unittest
-from pruby.strategy import Strategy
+from pruby.engine import Engine
 from pruby.calculator import PressureCalculator
 
 
 class TestStrategy(unittest.TestCase):
     def test_create_empty(self):
-        self.assertIsNotNone(Strategy(calc=PressureCalculator()))
+        self.assertIsNotNone(Engine(calc=PressureCalculator()))
 
     def test_has_default_strategies(self):
-        self.assertIsNotNone(Strategy(calc=PressureCalculator()).reader)
-        self.assertIsNotNone(Strategy(calc=PressureCalculator()).backfitter)
-        self.assertIsNotNone(Strategy(calc=PressureCalculator()).peakfitter)
-        self.assertIsNotNone(Strategy(calc=PressureCalculator()).corrector)
-        self.assertIsNotNone(Strategy(calc=PressureCalculator()).translator)
-        self.assertIsNotNone(Strategy(calc=PressureCalculator()).drawer)
+        self.assertIsNotNone(Engine(calc=PressureCalculator()).reader)
+        self.assertIsNotNone(Engine(calc=PressureCalculator()).backfitter)
+        self.assertIsNotNone(Engine(calc=PressureCalculator()).peakfitter)
+        self.assertIsNotNone(Engine(calc=PressureCalculator()).corrector)
+        self.assertIsNotNone(Engine(calc=PressureCalculator()).translator)
+        self.assertIsNotNone(Engine(calc=PressureCalculator()).drawer)
 
     def test_can_set_null_strategies(self):
-        s1 = Strategy(calc=PressureCalculator())
-        s2 = Strategy(calc=PressureCalculator())
+        s1 = Engine(calc=PressureCalculator())
+        s2 = Engine(calc=PressureCalculator())
         s1.set()
         self.assertEqual(s1.reader.name, s2.reader.name)
         self.assertEqual(s1.backfitter.name, s2.backfitter.name)
@@ -27,14 +27,14 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(s1.drawer.name, s2.drawer.name)
 
     def test_can_set_real_strategies(self):
-        s1 = Strategy(calc=PressureCalculator())
-        s2 = Strategy(calc=PressureCalculator())
-        s1.set(reading=Strategy.readers[-1].name)
-        s1.set(peakfitting=Strategy.peakfitters[-1].name)
-        s1.set(backfitting=Strategy.backfitters[-1].name)
-        s1.set(correcting=Strategy.correctors[-1].name)
-        s1.set(translating=Strategy.translators[-1].name)
-        s1.set(drawing=Strategy.drawers[-1].name)
+        s1 = Engine(calc=PressureCalculator())
+        s2 = Engine(calc=PressureCalculator())
+        s1.set(reading=Engine.readers[-1].name)
+        s1.set(peakfitting=Engine.peakfitters[-1].name)
+        s1.set(backfitting=Engine.backfitters[-1].name)
+        s1.set(correcting=Engine.correctors[-1].name)
+        s1.set(translating=Engine.translators[-1].name)
+        s1.set(drawing=Engine.drawers[-1].name)
         self.assertNotEqual(s1.reader.name, s2.reader.name)
         self.assertNotEqual(s1.backfitter.name, s2.backfitter.name)
         self.assertNotEqual(s1.peakfitter.name, s2.peakfitter.name)
@@ -43,7 +43,7 @@ class TestStrategy(unittest.TestCase):
         self.assertNotEqual(s1.drawer.name, s2.drawer.name)
 
     def test_cant_set_unexisting_strategies(self):
-        s = Strategy(calc=PressureCalculator())
+        s = Engine(calc=PressureCalculator())
         with self.assertRaises(KeyError):
             s.set(reading='dummy reader name')
         with self.assertRaises(KeyError):

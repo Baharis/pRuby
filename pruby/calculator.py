@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import uncertainties as uc
-from pruby.strategy import Strategy
+from pruby.engine import Engine
 from pruby.spectrum import Spectrum
 from pruby.utility import LineSubset
 from pruby.constants import P_0, R1_0, R2_0, T_0, UZERO
@@ -8,7 +8,7 @@ from pruby.constants import P_0, R1_0, R2_0, T_0, UZERO
 
 class PressureCalculator:
     def __init__(self):
-        self.strategy: Strategy = Strategy(self)
+        self.engine: Engine = Engine(self)
         self.dat_path: str = ''
         self.ref_path: str = ''
         self.limits: LineSubset = LineSubset(690.0, 705.0)
@@ -44,13 +44,13 @@ class PressureCalculator:
 
     def read(self, path: str = ''):
         self.dat_path = path if path else self.dat_path
-        self.strategy.read()
-        self.strategy.backfit()
-        self.strategy.peakfit()
+        self.engine.read()
+        self.engine.backfit()
+        self.engine.peakfit()
 
     def calculate_p_from_r1(self):
-        self.strategy.correct()
-        self.strategy.translate()
+        self.engine.correct()
+        self.engine.translate()
 
     def calculate_r1_from_p(self):
         target_p = self.p
@@ -72,7 +72,7 @@ class PressureCalculator:
 
     def draw(self):
         if self.peak_spectrum:
-            self.strategy.draw()
+            self.engine.draw()
         else:
             raise AttributeError('The peak spectrum is empty')
 
@@ -87,5 +87,5 @@ if __name__ == '__main__':
     c.read('/home/dtchon/git/pRuby/r27.txt')
     c.calculate_p_from_r1()
     print(c.p)
-    c.strategy.set(drawing='Simple')
+    c.engine.set(drawing='Simple')
     c.draw()

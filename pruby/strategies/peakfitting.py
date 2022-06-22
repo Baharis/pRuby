@@ -3,20 +3,20 @@ import numpy as np
 from scipy.optimize import curve_fit as scipy_fit
 from scipy.signal import find_peaks_cwt
 from uncertainties import ufloat
+from .base import BaseStrategy, BaseStrategies
 from ..utility import gaussian, pseudovoigt
 from ..spectrum import Curve
 from ..constants import R1_0, R2_0
 
 
-class PeakfittingStrategy(abc.ABC):
-    @property
-    @abc.abstractmethod
-    def name(self) -> str:
-        pass
-
+class PeakfittingStrategy(BaseStrategy, abc.ABC):
     @abc.abstractmethod
     def peakfit(self, calc):
-        pass
+        raise NotImplementedError
+
+
+class PeakfittingStrategies(BaseStrategies):
+    pass
 
 
 class BasePeakfittingStrategy(PeakfittingStrategy):
@@ -75,6 +75,7 @@ class BasePeakfittingStrategy(PeakfittingStrategy):
         return ufloat(curve.args[index], curve.uncs[index])
 
 
+@PeakfittingStrategies.register(default=True)
 class GaussianPeakfittingStrategy(BasePeakfittingStrategy):
     name = 'Gaussian'
 
@@ -95,6 +96,7 @@ class GaussianPeakfittingStrategy(BasePeakfittingStrategy):
         calc.r2 = self.ufloat_from_curve_args(curve, index=4)
 
 
+@PeakfittingStrategies.register()
 class PseudovoigtPeakfittingStrategy(BasePeakfittingStrategy):
     name = 'Pseudovoigt'
 
@@ -119,6 +121,7 @@ class PseudovoigtPeakfittingStrategy(BasePeakfittingStrategy):
         calc.r2 = self.ufloat_from_curve_args(curve, index=5)
 
 
+@PeakfittingStrategies.register()
 class CamelPeakfittingStrategy(BasePeakfittingStrategy):
     name = 'Camel'
 

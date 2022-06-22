@@ -1,6 +1,6 @@
 from pruby.cli import Application
 from pruby.constants import R1_0, T_0
-from pruby.strategy import Strategy
+from pruby.engine import Engine
 from pruby.cli import PRubyArgumentParser, PRubyHelpFormatter
 
 
@@ -21,17 +21,17 @@ if __name__ == '__main__':
     p.add_argument('-s', '--reftemp', default=str(T_0 - 273.15),
                    help='Reference temperature in \u00B0C')
 
-    p.add_strategy_argument('-R', '--readers', Strategy.readers,
+    p.add_strategy_argument('-R', '--readers', Engine.readers,
                             help='Strategy for reading the spectrum file')
-    p.add_strategy_argument('-B', '--backfitter', Strategy.backfitters,
+    p.add_strategy_argument('-B', '--backfitter', Engine.backfitters,
                             help='Strategy for fitting the background')
-    p.add_strategy_argument('-P', '--peakfitter', Strategy.peakfitters,
+    p.add_strategy_argument('-P', '--peakfitter', Engine.peakfitters,
                             help='Strategy for fitting spectrum peaks')
-    p.add_strategy_argument('-C', '--corrector', Strategy.correctors,
+    p.add_strategy_argument('-C', '--corrector', Engine.correctors,
                             help='Strategy for applying temperature correction')
-    p.add_strategy_argument('-T', '--translator', Strategy.translators,
+    p.add_strategy_argument('-T', '--translator', Engine.translators,
                             help='Strategy for translating R1 to pressure')
-    p.add_strategy_argument('-D', '--drawer', Strategy.drawers,
+    p.add_strategy_argument('-D', '--drawer', Engine.drawers,
                             help='Strategy for drawing the spectrum')
 
     Application(parser=p).run()

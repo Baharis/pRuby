@@ -1,20 +1,21 @@
 import abc
 import numpy as np
+from .base import BaseStrategy, BaseStrategies
 from ..spectrum import Spectrum
 
 
-class ReadingStrategy(abc.ABC):
-    @property
-    @abc.abstractmethod
-    def name(self) -> str:
-        pass
-
+class ReadingStrategy(BaseStrategy, abc.ABC):
     @staticmethod
     @abc.abstractmethod
     def read(calc):
-        pass
+        raise NotImplementedError
 
 
+class ReadingStrategies(BaseStrategies):
+    pass
+
+
+@ReadingStrategies.register(default=True)
 class RawTxtReadingStrategy(ReadingStrategy):
     name = 'Raw txt'
 
@@ -25,6 +26,7 @@ class RawTxtReadingStrategy(ReadingStrategy):
         calc.raw_spectrum = Spectrum(x_list, y_list).within(calc.limits)
 
 
+@ReadingStrategies.register()
 class MetaTxtReadingStrategy(ReadingStrategy):
     name = 'Metadata txt'
 

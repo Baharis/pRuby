@@ -1,4 +1,5 @@
 import abc
+from .base import BaseStrategy, BaseStrategies
 from ..utility.functions import polynomial
 from ..constants import T_0, UZERO
 
@@ -24,17 +25,17 @@ def vos_r2_shift(t):
     return 0.1 * polynomial(0.0, 6.554e-2, 8.670e-5, -1.099e-7)(t - 300.0)
 
 
-class CorrectingStrategy(abc.ABC):
-    @property
-    @abc.abstractmethod
-    def name(self) -> str:
-        pass
-
+class CorrectingStrategy(BaseStrategy, abc.ABC):
     @abc.abstractmethod
     def correct(self, calc):
-        pass
+        raise NotImplementedError
 
 
+class CorrectingStrategies(BaseStrategies):
+    pass
+
+
+@CorrectingStrategies.register(default=True)
 class VosR1CorrectingStrategy(CorrectingStrategy):
     """Based on doi:10.1063/1.348903"""
     name = 'Vos R1'  # (1991)
@@ -60,6 +61,7 @@ class VosR12CorrectingStrategy(CorrectingStrategy):
             - 0.5 * vos_r2_shift(calc.t) - 0.5 * vos_r1_shift(calc.t)
 
 
+@CorrectingStrategies.register()
 class RaganR1CorrectingStrategy(CorrectingStrategy):
     """Based on doi:10.1063/1.351951"""
     name = 'Ragan R1'  # (1992)
@@ -85,6 +87,7 @@ class RaganR12CorrectingStrategy(CorrectingStrategy):
                              ragan_r2_position(T_0)-ragan_r2_position(calc.t))/2
 
 
+@CorrectingStrategies.register()
 class NoneCorrectingStrategy(CorrectingStrategy):
     name = 'None'
 

@@ -23,17 +23,17 @@ class Application(tk.Frame):
 
         # method string variables
         self.reading_strategy = tk.StringVar(
-            value=self.calc.strategy.reader.name)
+            value=self.calc.engine.reader.name)
         self.backfitting_strategy = tk.StringVar(
-            value=self.calc.strategy.backfitter.name)
+            value=self.calc.engine.backfitter.name)
         self.peakfitting_strategy = tk.StringVar(
-            value=self.calc.strategy.peakfitter.name)
+            value=self.calc.engine.peakfitter.name)
         self.correcting_strategy = tk.StringVar(
-            value=self.calc.strategy.corrector.name)
+            value=self.calc.engine.corrector.name)
         self.translating_strategy = tk.StringVar(
-            value=self.calc.strategy.translator.name)
+            value=self.calc.engine.translator.name)
         self.drawing_strategy = tk.StringVar(
-            value=self.calc.strategy.drawer.name)
+            value=self.calc.engine.drawer.name)
 
         # BUILDING TOP MENU
         self.menu = tk.Menu(self)
@@ -62,17 +62,17 @@ class Application(tk.Frame):
                 value=strategy.name, variable=str_var, command=self.set_methods)
             self.menu_options.add_separator()  # separators if necessary
 
-        make_options_submenu(self.calc.strategy.readers,
+        make_options_submenu(self.calc.engine.readers,
                              self.reading_strategy, 'Reading')
-        make_options_submenu(self.calc.strategy.backfitters,
+        make_options_submenu(self.calc.engine.backfitters,
                              self.backfitting_strategy, 'Background fitting')
-        make_options_submenu(self.calc.strategy.peakfitters,
+        make_options_submenu(self.calc.engine.peakfitters,
                              self.peakfitting_strategy, 'Spectrum fitting')
-        make_options_submenu(self.calc.strategy.correctors,
+        make_options_submenu(self.calc.engine.correctors,
                              self.correcting_strategy, 'Temperature correction')
-        make_options_submenu(self.calc.strategy.translators,
-                            self.translating_strategy, 'Pressure determination')
-        make_options_submenu(self.calc.strategy.drawers,
+        make_options_submenu(self.calc.engine.translators,
+                             self.translating_strategy, 'Pressure determination')
+        make_options_submenu(self.calc.engine.drawers,
                              self.drawing_strategy, 'Drawing style')
         self.menu.add_command(label='?', command=show_about)
 
@@ -187,7 +187,7 @@ class Application(tk.Frame):
         return files[(len(files) + index + shift) % len(files)]
 
     def set_methods(self):
-        self.calc.strategy.set(
+        self.calc.engine.set(
             reading=self.reading_strategy.get(),
             backfitting=self.backfitting_strategy.get(),
             peakfitting=self.peakfitting_strategy.get(),

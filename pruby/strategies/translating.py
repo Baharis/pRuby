@@ -1,4 +1,5 @@
 import abc
+from .base import BaseStrategy, BaseStrategies
 from uncertainties import ufloat, correlation_matrix
 from ..constants import R1_0, R2_0, T_0, UZERO, P_0
 
@@ -8,17 +9,17 @@ def mao_function(r1, a, b):
     return (a / b) * (((r1 / R1_0) ** b) - 1)
 
 
-class TranslatingStrategy:
-    @property
-    @abc.abstractmethod
-    def name(self) -> str:
-        pass
-
+class TranslatingStrategy(BaseStrategy, abc.ABC):
     @abc.abstractmethod
     def translate(self, calc):
-        pass
+        raise NotImplementedError
 
 
+class TranslatingStrategies(BaseStrategies):
+    pass
+
+
+@TranslatingStrategies.register(default=True)
 class LiuTranslatingStrategy(TranslatingStrategy):
     name = 'Liu'  # (2013)
 
@@ -27,6 +28,7 @@ class LiuTranslatingStrategy(TranslatingStrategy):
         calc.p = mao_function(r1, a=1904, b=9.827)
 
 
+@TranslatingStrategies.register()
 class MaoTranslatingStrategy(TranslatingStrategy):
     name = 'Mao'  # (1986)
 
@@ -35,6 +37,7 @@ class MaoTranslatingStrategy(TranslatingStrategy):
         calc.p = mao_function(r1, a=1904, b=7.665)
 
 
+@TranslatingStrategies.register()
 class PiermariniTranslatingStrategy(TranslatingStrategy):
     """Based on doi:10.1063/1.321957"""
     name = 'Piermarini'  # (1975)
@@ -44,6 +47,7 @@ class PiermariniTranslatingStrategy(TranslatingStrategy):
         calc.p = ufloat(2.740, 0.016) * (r1 - R1_0)
 
 
+@TranslatingStrategies.register()
 class WeiTranslatingStrategy(TranslatingStrategy):
     """Based on doi:10.1063/1.3624618"""
     name = 'Wei'  # (2011)

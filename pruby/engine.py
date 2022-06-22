@@ -1,12 +1,7 @@
-from .reading import *
-from .backfitting import *
-from .peakfitting import *
-from .correcting import *
-from .translating import *
-from .drawing import *
 
 
-class Strategy:
+
+class Engine:
     readers = [RawTxtReadingStrategy(), MetaTxtReadingStrategy()]
     backfitters = [HuberBackfittingStrategy(), SateliteBackfittingStrategy()]
     peakfitters = [GaussianPeakfittingStrategy(),
