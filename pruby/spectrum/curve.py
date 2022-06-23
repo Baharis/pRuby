@@ -21,6 +21,6 @@ class Curve:
         for i, a in enumerate(call_args):
             try:
                 args[i] = a
-            except IndexError:
-                raise ValueError('Too many arguments provided to the function')
+            except IndexError as e:
+                raise IndexError('Too many arguments provided to the function')
         return call_x, args
