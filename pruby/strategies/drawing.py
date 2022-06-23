@@ -75,8 +75,8 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
         self.ax.axvline(x, color=self.color)
 
     def draw_finalize(self):
-        self.ax.set_xlim([min(self.calc.peak_spectrum.x),
-                          max(self.calc.peak_spectrum.x)])
+        self.ax.set_xlim(min(self.calc.peak_spectrum.x),
+                         max(self.calc.peak_spectrum.x))
         self.ax.annotate('nm', xy=(1, 0), ha='left', va='top',
                          xytext=(10, - 3 - mpl.rcParams['xtick.major.pad']),
                          xycoords='axes fraction', textcoords='offset points')
