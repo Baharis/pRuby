@@ -1,4 +1,5 @@
 import abc
+from collections import OrderedDict
 from .base import BaseStrategy, BaseStrategies
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -18,6 +19,7 @@ class DrawingStrategy(BaseStrategy, abc.ABC):
 
 
 class DrawingStrategies(BaseStrategies):
+    registry = OrderedDict()
     strategy_type = DrawingStrategy
 
 
@@ -45,7 +47,7 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
         self.color = next(self.color_cycle)
 
     def draw_new_figure(self):
-        mpl.use('TkAgg') if self.interactive else mpl.use('Agg')
+        mpl.use('TkAgg')
         self.fig = plt.figure(figsize=(8, 6), dpi=100)
         self.ax = self.fig.add_subplot()
 

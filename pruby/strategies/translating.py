@@ -1,4 +1,5 @@
 import abc
+from collections import OrderedDict
 from .base import BaseStrategy, BaseStrategies
 from uncertainties import ufloat, correlation_matrix
 from ..constants import R1_0, R2_0, T_0, UZERO, P_0
@@ -16,6 +17,7 @@ class TranslatingStrategy(BaseStrategy, abc.ABC):
 
 
 class TranslatingStrategies(BaseStrategies):
+    registry = OrderedDict()
     strategy_type = TranslatingStrategy
 
 

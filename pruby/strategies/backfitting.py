@@ -1,5 +1,6 @@
 import abc
 import copy
+from collections import OrderedDict
 from .base import BaseStrategy, BaseStrategies
 from scipy.optimize import curve_fit
 from ..utility.functions import polynomial
@@ -13,6 +14,7 @@ class BackfittingStrategy(BaseStrategy, abc.ABC):
 
 
 class BackfittingStrategies(BaseStrategies):
+    registry = OrderedDict()
     strategy_type = BackfittingStrategy
 
 

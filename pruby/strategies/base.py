@@ -1,5 +1,5 @@
 import abc
-from collections import UserDict
+from collections import UserDict, OrderedDict
 from typing import Callable
 
 
@@ -16,7 +16,11 @@ class BaseStrategies(UserDict, abc.ABC):
 
     strategy_type = BaseStrategy
     default: strategy_type = None
-    registry = {}
+    registry: OrderedDict
+
+    @abc.abstractmethod
+    def registry(self) -> dict:
+        raise NotImplementedError
 
     @classmethod
     def create(cls, name: str = '') -> strategy_type:

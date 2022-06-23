@@ -1,4 +1,5 @@
 import abc
+from collections import OrderedDict
 from .base import BaseStrategy, BaseStrategies
 from ..utility.functions import polynomial
 from ..constants import T_0, UZERO
@@ -32,6 +33,7 @@ class CorrectingStrategy(BaseStrategy, abc.ABC):
 
 
 class CorrectingStrategies(BaseStrategies):
+    registry = OrderedDict()
     strategy_type = CorrectingStrategy
 
 

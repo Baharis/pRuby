@@ -1,4 +1,5 @@
 import abc
+from collections import OrderedDict
 import numpy as np
 from scipy.optimize import curve_fit as scipy_fit
 from scipy.signal import find_peaks_cwt
@@ -16,6 +17,7 @@ class PeakfittingStrategy(BaseStrategy, abc.ABC):
 
 
 class PeakfittingStrategies(BaseStrategies):
+    registry = OrderedDict()
     strategy_type = PeakfittingStrategy
 
 

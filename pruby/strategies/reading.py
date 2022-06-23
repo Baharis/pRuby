@@ -1,5 +1,6 @@
 import abc
 import numpy as np
+from collections import OrderedDict
 from .base import BaseStrategy, BaseStrategies
 from ..spectrum import Spectrum
 
@@ -12,6 +13,7 @@ class ReadingStrategy(BaseStrategy, abc.ABC):
 
 
 class ReadingStrategies(BaseStrategies):
+    registry = OrderedDict()
     strategy_type = ReadingStrategy
 
 

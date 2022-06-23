@@ -82,7 +82,7 @@ if __name__ == '__main__':
     c = PressureCalculator()
     c.read('/home/dtchon/git/pRuby/test/test_data1.txt')
     c.calculate_p_from_r1()
-    print(c.p)
+    c.output_path = '/home/dtchon/_/pruby.png'
     c.set_current_as_reference()
     c.draw()
     c.read('/home/dtchon/git/pRuby/test/test_data2.txt')
