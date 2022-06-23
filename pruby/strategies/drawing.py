@@ -102,7 +102,7 @@ class SimpleDrawingStrategy(BaseDrawingStrategy):
 
 @DrawingStrategies.register(default=True)
 class ComplexDrawingStrategy(BaseDrawingStrategy):
-    name = 'Traditional'
+    name = 'Complex'
 
     def draw(self, calc):
         self.draw_initialize(calc)
