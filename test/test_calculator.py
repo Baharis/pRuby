@@ -1,4 +1,5 @@
 import pathlib
+import tempfile
 import unittest
 from pruby.engine import Engine
 from pruby.calculator import PressureCalculator
@@ -20,8 +21,8 @@ subengines = \
 strategy_types = \
     [
         'reading',
-        'peakfitting',
         'backfitting',
+        'peakfitting',
         'correcting',
         'translating',
         'drawing'
@@ -172,6 +173,17 @@ class TestCalculator(unittest.TestCase):
         self.assertNotAlmostEqual(calc2.p.n, calc3.p.n)
         self.assertNotAlmostEqual(calc2.p.n, calc4.p.n)
         self.assertNotAlmostEqual(calc3.p.n, calc4.p.n)
+
+    def test_drawing(self):
+        calc = PressureCalculator()
+        calc.read(test_data2_path)
+        for strategy in strategies.DrawingStrategies.registry.keys():
+            with tempfile.TemporaryDirectory() as temp_dir:
+                png_path = temp_dir + 'file.png'
+                calc.output_path = png_path
+                calc.engine.set_strategy(drawing=strategy)
+                calc.draw()
+                self.assertTrue(pathlib.Path(png_path).is_file())
 
 
 if __name__ == '__main__':
