@@ -15,7 +15,7 @@ class ReadingStrategies(BaseStrategies):
     strategy_type = ReadingStrategy
 
 
-@ReadingStrategies.register(default=True)
+@ReadingStrategies.register()
 class RawTxtReadingStrategy(ReadingStrategy):
     name = 'Raw txt'
 
@@ -26,7 +26,7 @@ class RawTxtReadingStrategy(ReadingStrategy):
         calc.raw_spectrum = Spectrum(x_list, y_list).within(calc.limits)
 
 
-@ReadingStrategies.register()
+@ReadingStrategies.register(default=True)
 class MetaTxtReadingStrategy(ReadingStrategy):
     name = 'Metadata txt'
 

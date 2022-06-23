@@ -4,8 +4,14 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from pruby.utility import cycle
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from pruby import PressureCalculator
+
 
 class DrawingStrategy(BaseStrategy, abc.ABC):
+    calc: 'PressureCalculator'
+
     @abc.abstractmethod
     def draw(self, calc):
         raise NotImplementedError
@@ -20,11 +26,15 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
                          '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
 
     def __init__(self):
-        self.calc = None
+        self.calc: 'PressureCalculator'
         self.fig: plt.Figure
         self.ax: plt.Axes
         self.fig, self.ax = plt.subplots()
         self.color = '#000000'
+
+    @property
+    def interactive(self):
+        return not bool(self.calc.output_path)
 
     def draw_initialize(self, calc):
         self.calc = calc
@@ -35,8 +45,11 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
         self.color = next(self.color_cycle)
 
     def draw_new_figure(self):
-        mpl.use('TkAgg')
-        self.fig, self.ax = plt.subplots()
+        mpl.use('TkAgg') if self.interactive else mpl.use('Agg')
+        self.fig = plt.figure(figsize=(8, 6), dpi=100)
+        self.ax = self.fig.add_subplot()
+
+    def draw_grid_and_tics(self):
         self.ax.minorticks_on()
         self.ax.grid(b=True, which='major', color='gray', alpha=0.2)
         self.ax.grid(b=True, axis='x', which='minor', color='gray', alpha=0.2)
@@ -44,8 +57,11 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
         self.ax.tick_params(axis='x', which='minor', bottom=True)
 
     def draw_spectrum(self, x, y):
-        lab = str(self.calc.p if not self.calc.dat_path else self.calc.dat_path)
-        self.ax.plot(x, y, self.color, marker='.', ls='None', label=lab)
+        if self.interactive:
+            label = self.calc.dat_path
+        else:
+            label = f'p = {self.calc.p} GPa'
+        self.ax.plot(x, y, self.color, marker='.', ls='None', label=label)
 
     def draw_curve(self, spectrum, bg=False):
         y = -spectrum.f if bg else spectrum.f
@@ -65,7 +81,10 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
                          xycoords='axes fraction', textcoords='offset points')
         self.ax.legend()
         self.calc.fig = self.fig
-        plt.show(block=True)  # this should change in gui and line
+        if self.interactive:
+            self.fig.show()
+        else:
+            self.fig.savefig(self.calc.output_path)
 
 
 @DrawingStrategies.register()
@@ -74,6 +93,7 @@ class SimpleDrawingStrategy(BaseDrawingStrategy):
 
     def draw(self, calc):
         self.draw_initialize(calc)
+        self.draw_grid_and_tics()
         self.draw_spectrum(calc.peak_spectrum.x, calc.peak_spectrum.y)
         self.draw_vline(calc.r1.n)
         self.draw_finalize()
@@ -85,6 +105,7 @@ class ComplexDrawingStrategy(BaseDrawingStrategy):
 
     def draw(self, calc):
         self.draw_initialize(calc)
+        self.draw_grid_and_tics()
         self.draw_spectrum(calc.peak_spectrum.x, calc.peak_spectrum.y)
         self.draw_curve(calc.peak_spectrum)
         self.draw_curve(calc.back_spectrum, bg=True)

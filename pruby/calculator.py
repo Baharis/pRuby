@@ -24,6 +24,7 @@ class PressureCalculator:
         self.t_correction: uc.UFloat = UZERO
         self.offset: uc.UFloat = UZERO
         self.fig: plt.Figure = plt.Figure()
+        self.output_path: str = ''
         self.calculate_p_from_r1()
 
     def set_current_as_reference(self):
@@ -86,6 +87,5 @@ if __name__ == '__main__':
     c.draw()
     c.read('/home/dtchon/git/pRuby/test/test_data2.txt')
     c.calculate_p_from_r1()
-    print(c.p)
     c.engine.set_strategy(drawing='Simple')
     c.draw()
