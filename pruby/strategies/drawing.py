@@ -28,10 +28,10 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
                          '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
 
     def __init__(self):
+        mpl.use('TkAgg')
         self.calc: 'PressureCalculator'
-        self.fig: plt.Figure
-        self.ax: plt.Axes
-        self.fig, self.ax = plt.subplots()
+        self.fig: plt.Figure = plt.figure(figsize=(8, 6), dpi=100)
+        self.ax: plt.Axes = self.fig.add_subplot()
         self.color = '#000000'
 
     @property
@@ -47,7 +47,6 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
         self.color = next(self.color_cycle)
 
     def draw_new_figure(self):
-        mpl.use('TkAgg')
         self.fig = plt.figure(figsize=(8, 6), dpi=100)
         self.ax = self.fig.add_subplot()
 
