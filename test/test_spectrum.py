@@ -67,7 +67,7 @@ class TestSpectrum(unittest.TestCase):
             sum(Spectrum(self.x, self.y, curve=Curve(lambda x: x)).si), 3.0)
 
     def test_si_huber(self):
-        self.assertAlmostEqual(1.1329,
+        self.assertAlmostEqual(1.132992,
             sum(Spectrum(self.x, self.y, sigma_type='huber').si))
 
     def test_mse(self):
