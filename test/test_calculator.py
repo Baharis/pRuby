@@ -61,15 +61,12 @@ class TestEngine(unittest.TestCase):
         for sub in subengines:
             self.assertIsInstance(getattr(s, sub), strategies.BaseStrategy)
 
-    def test_can_set_real_strategies(self):
-        s1 = Engine(calc=PressureCalculator())
-        s2 = Engine(calc=PressureCalculator())
-        for stype, sfamily in zip(strategy_types, strategy_families):
-            name_of_non_default_strategy = [k for k in sfamily.registry.keys()
-                                            if k is not sfamily.default.name][0]
-            s1.set_strategy(**{stype: name_of_non_default_strategy})
-        for sub in subengines:
-            self.assertNotEqual(type(getattr(s1, sub)), type(getattr(s2, sub)))
+    def test_can_set_existing_strategies(self):
+        s = Engine(calc=PressureCalculator())
+        for sub, st, sf in zip(subengines, strategy_types, strategy_families):
+            for strategy_name in sf.registry.keys():
+                s.set_strategy(**{st: strategy_name})
+                self.assertIsInstance(getattr(s, sub), strategies.BaseStrategy)
 
     def test_cant_set_unexisting_strategies(self):
         engine = Engine(calc=PressureCalculator())
@@ -77,15 +74,12 @@ class TestEngine(unittest.TestCase):
             with self.assertRaises(TypeError):
                 engine.set_strategy(**{sub: f'dummy {sub} name'})
 
-    def test_can_assign_real_subengines(self):
-        s1 = Engine(calc=PressureCalculator())
-        s2 = Engine(calc=PressureCalculator())
-        for sub, sfamily in zip(subengines, strategy_families):
-            non_default_strategy = [v for v in sfamily.registry.values()
-                                    if v.name != sfamily.default.name][0]
-            setattr(s1, sub, non_default_strategy)
-        for sub in subengines:
-            self.assertNotEqual(type(getattr(s1, sub)), type(getattr(s2, sub)))
+    def test_can_assign_existing_subengines(self):
+        s = Engine(calc=PressureCalculator())
+        for sub, st, sf in zip(subengines, strategy_types, strategy_families):
+            for strategy in sf.registry.values():
+                setattr(s, sub, strategy())
+                self.assertIsInstance(getattr(s, sub), strategies.BaseStrategy)
 
 
 # noinspection PyTypeChecker
@@ -147,28 +141,37 @@ class TestCalculator(unittest.TestCase):
         calc2.engine.set_strategy(backfitting='Linear Satelite',
                                   peakfitting='Gaussian')
         calc3.engine.set_strategy(backfitting='Linear Huber',
-                                  peakfitting='Pseudovoigt')
+                                  peakfitting='Camel')
         calc1.read(test_data1_path)
         calc2.read(test_data1_path)
         calc3.read(test_data1_path)
         self.assertNotAlmostEqual(calc1.r1.n, calc2.r1.n)
         self.assertNotAlmostEqual(calc1.r1.n, calc3.r1.n)
+        self.assertNotAlmostEqual(calc2.r1.n, calc3.r1.n)
 
     def test_different_correctors_translators_give_different_p(self):
         calc1 = PressureCalculator()
         calc2 = PressureCalculator()
         calc3 = PressureCalculator()
+        calc4 = PressureCalculator()
         calc1.r1, calc1.t = calc1.r1 + 2.0, calc1.t + 2.0
         calc1.r2, calc2.t = calc2.r1 + 2.0, calc2.t + 2.0
         calc1.r3, calc3.t = calc3.r1 + 2.0, calc3.t + 2.0
+        calc1.r4, calc4.t = calc4.r1 + 2.0, calc4.t + 2.0
         calc1.engine.set_strategy(correcting='Vos R1', translating='Liu')
-        calc2.engine.set_strategy(correcting='Ragan R1', translating='Liu')
-        calc3.engine.set_strategy(correcting='Vos R1', translating='Piermarini')
+        calc2.engine.set_strategy(correcting='Ragan R1', translating='Mao')
+        calc3.engine.set_strategy(correcting='None', translating='Piermarini')
+        calc4.engine.set_strategy(correcting='None', translating='Wei')
         calc1.calculate_p_from_r1()
         calc2.calculate_p_from_r1()
         calc3.calculate_p_from_r1()
+        calc4.calculate_p_from_r1()
         self.assertNotAlmostEqual(calc1.p.n, calc2.p.n)
         self.assertNotAlmostEqual(calc1.p.n, calc3.p.n)
+        self.assertNotAlmostEqual(calc1.p.n, calc4.p.n)
+        self.assertNotAlmostEqual(calc2.p.n, calc3.p.n)
+        self.assertNotAlmostEqual(calc2.p.n, calc4.p.n)
+        self.assertNotAlmostEqual(calc3.p.n, calc4.p.n)
 
 
 if __name__ == '__main__':
