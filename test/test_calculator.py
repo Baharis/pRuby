@@ -2,7 +2,7 @@ import pathlib
 import tempfile
 import unittest
 from pruby.engine import Engine
-from pruby.calculator import PressureCalculator
+from pruby import PressureCalculator
 from pruby import strategies
 
 
@@ -156,9 +156,9 @@ class TestCalculator(unittest.TestCase):
         calc3 = PressureCalculator()
         calc4 = PressureCalculator()
         calc1.r1, calc1.t = calc1.r1 + 2.0, calc1.t + 2.0
-        calc1.r2, calc2.t = calc2.r1 + 2.0, calc2.t + 2.0
-        calc1.r3, calc3.t = calc3.r1 + 2.0, calc3.t + 2.0
-        calc1.r4, calc4.t = calc4.r1 + 2.0, calc4.t + 2.0
+        calc2.r1, calc2.t = calc2.r1 + 2.0, calc2.t + 2.0
+        calc3.r1, calc3.t = calc3.r1 + 2.0, calc3.t + 2.0
+        calc4.r1, calc4.t = calc4.r1 + 2.0, calc4.t + 2.0
         calc1.engine.set_strategy(correcting='Vos R1', translating='Liu')
         calc2.engine.set_strategy(correcting='Ragan R1', translating='Mao')
         calc3.engine.set_strategy(correcting='None', translating='Piermarini')
