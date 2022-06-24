@@ -22,8 +22,7 @@ in the command line:
     $ mkvirtualenv -p /path/to/python3.6+ pRuby-venv
 
 Afterwards, the package can bo either installed via PyPI,
-where it is available under the name `pruby`.
-In order to start working with pRuby, install it using:
+where it is available under the name `pruby`:
 
     $ pip install pruby
 
@@ -51,13 +50,13 @@ This routine can be performed in pRuby using the following commands:
     calc.output_path = '/path/to/plotted/spectrum.png'
     calc.draw()
 
-Of course, selected steps can be omitted, modified, or repeated at will.
-Instead of readig an actual spectrum, position of r1 peak can be assigned
+Of course, selected steps can be omitted, reorganised, or repeated at will.
+Instead of reading an actual spectrum, position of r1 peak can be assigned
 manually by setting the value of `calc.r1`. Pressure can be calculated
 based on r1, but r1 can be calculated based on current pressure as well.
 If `output_path` is not provided, calling `calc.draw()` will show a plot
 in a pop-up `matplotlib` window instead. In particular, calling `draw()`
-multiple times will overlay the spectra if output_path is not set.
+multiple times will overlay the spectra.
 
 The same capabilities can be accessed via simple tkinter GUI,
 which is functional on all popular systems, although some of its capabilities
@@ -132,7 +131,7 @@ of underlaying calculator and change the behaviour of program.
 * **?** - Show basic information about the program
 
 Multiple behaviour options are available and can be selected from the package
-leve as well, by modyfying the `engine` attribute of a `PressureCalculator`.
+level as well, by modyfying the `engine` attribute of a `PressureCalculator`.
 For example, the temperature correction can be turned off therein using:
 
     calc.engine.set_strategy(correcting='None')
@@ -149,4 +148,4 @@ and distributed under an MIT license. It is in development and all
 tips, suggestions, or contributions are welcome and can be sent
 [here](mailto:dtchon@chem.uw.edu.pl).
 If you have utilised pRuby in academic work, please let me know!
-If the tools find wider use, a dedicated paper will be published.
+If the tools find a wider use, a dedicated paper will be published.
