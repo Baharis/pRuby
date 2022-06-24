@@ -62,6 +62,6 @@ setup(
         'numpy>=1.18.1',
         'scipy>=1.5.1',
         'uncertainties>=3.*',
-        'natsort=8.*',
+        'natsort==8.*'
     ]
 )
