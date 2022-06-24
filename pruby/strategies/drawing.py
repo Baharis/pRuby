@@ -29,6 +29,7 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
 
     def __init__(self):
         mpl.use('TkAgg')
+        plt.close()
         self.calc: 'PressureCalculator'
         self.fig: plt.Figure = plt.figure(figsize=(8, 6), dpi=100)
         self.ax: plt.Axes = self.fig.add_subplot()
