@@ -1,10 +1,18 @@
+import enum
 import os
 import tkinter as tk
 from natsort import natsorted
-from ..constants import R1_0, T_0, P_0
-from ..calculator import PressureCalculator
-from . import FilenameEntry, UfloatEntry, StatusBar, open_file_dialogue, \
-    show_about
+from pruby.constants import R1_0, T_0, P_0
+from pruby.calculator import PressureCalculator
+from pruby.gui.gridable import FilenameEntry, UfloatEntry, StatusBar
+from pruby.gui.popups import open_file_dialogue, show_about
+from pruby.strategies import \
+    ReadingStrategies, \
+    BackfittingStrategies, \
+    PeakfittingStrategies, \
+    CorrectingStrategies, \
+    TranslatingStrategies, \
+    DrawingStrategies
 
 
 class Application(tk.Frame):
@@ -23,17 +31,17 @@ class Application(tk.Frame):
 
         # method string variables
         self.reading_strategy = tk.StringVar(
-            value=self.calc.strategy.reader.name)
+            value=self.calc.engine.reader.name)
         self.backfitting_strategy = tk.StringVar(
-            value=self.calc.strategy.backfitter.name)
+            value=self.calc.engine.backfitter.name)
         self.peakfitting_strategy = tk.StringVar(
-            value=self.calc.strategy.peakfitter.name)
+            value=self.calc.engine.peakfitter.name)
         self.correcting_strategy = tk.StringVar(
-            value=self.calc.strategy.corrector.name)
+            value=self.calc.engine.corrector.name)
         self.translating_strategy = tk.StringVar(
-            value=self.calc.strategy.translator.name)
+            value=self.calc.engine.translator.name)
         self.drawing_strategy = tk.StringVar(
-            value=self.calc.strategy.drawer.name)
+            value=self.calc.engine.drawer.name)
 
         # BUILDING TOP MENU
         self.menu = tk.Menu(self)
@@ -55,28 +63,52 @@ class Application(tk.Frame):
         self.menu_options = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Methods", menu=self.menu_options)
 
-        def make_options_submenu(strategy_list, str_var, label):
+        def make_options_submenu(strategy_list, str_var, label, command):
             self.menu_options.add_command(label=label, state='disabled')
             for strategy in strategy_list:
                 self.menu_options.add_radiobutton(label=strategy.name,
-                value=strategy.name, variable=str_var, command=self.set_methods)
+                value=strategy.name, variable=str_var, command=command)
             self.menu_options.add_separator()  # separators if necessary
 
-        make_options_submenu(self.calc.strategy.readers,
-                             self.reading_strategy, 'Reading')
-        make_options_submenu(self.calc.strategy.backfitters,
-                             self.backfitting_strategy, 'Background fitting')
-        make_options_submenu(self.calc.strategy.peakfitters,
-                             self.peakfitting_strategy, 'Spectrum fitting')
-        make_options_submenu(self.calc.strategy.correctors,
-                             self.correcting_strategy, 'Temperature correction')
-        make_options_submenu(self.calc.strategy.translators,
-                            self.translating_strategy, 'Pressure determination')
-        make_options_submenu(self.calc.strategy.drawers,
-                             self.drawing_strategy, 'Drawing style')
+        make_options_submenu(
+            strategy_list=ReadingStrategies.registry.values(),
+            str_var=self.reading_strategy,
+            label='Reading',
+            command=self.set_reading_method
+        )
+        make_options_submenu(
+            strategy_list=BackfittingStrategies.registry.values(),
+            str_var=self.backfitting_strategy,
+            label='Background fitting',
+            command=self.set_backfitting_method
+        )
+        make_options_submenu(
+            strategy_list=PeakfittingStrategies.registry.values(),
+            str_var=self.peakfitting_strategy,
+            label='Spectrum fitting',
+            command=self.set_peakfitting_method
+        )
+        make_options_submenu(
+            strategy_list=CorrectingStrategies.registry.values(),
+            str_var=self.correcting_strategy,
+            label='Temperature correction',
+            command=self.set_correcting_method
+        )
+        make_options_submenu(
+            strategy_list=TranslatingStrategies.registry.values(),
+            str_var=self.translating_strategy,
+            label='Pressure determination',
+            command=self.set_translating_method
+        )
+        make_options_submenu(
+            strategy_list=DrawingStrategies.registry.values(),
+            str_var=self.drawing_strategy,
+            label='Drawing style',
+            command=self.set_drawing_method
+        )
         self.menu.add_command(label='?', command=show_about)
 
-        # ENTRY AREA
+        # BUILDING ENTRY AREA
         self.file = FilenameEntry(self, self.file_to_previous,
                                   self.file_from_entry, self.file_to_next)
         self.file.grid(row=0, column=0, columnspan=4)
@@ -90,12 +122,12 @@ class Application(tk.Frame):
                              unit='GPa', cmd=self.recalculate_r)
         self.p.grid(row=3, column=0, columnspan=4)
 
-        # STATUS BAR
+        # BUILDING STATUS BAR
         self.status_bar = StatusBar(self)
         self.status_bar.grid(row=4, column=0, columnspan=4)
 
         # FINAL SETUP
-        self.set_methods()
+        self.set_all_methods()
         self.save_reference()  # ran to update correlation b/ temp corr and r1!
         self.display('Ready...')
 
@@ -133,8 +165,7 @@ class Application(tk.Frame):
         if filename is '':
             return
         try:
-            self.calc.filename = filename
-            self.calc.read_and_fit()
+            self.calc.read(filename)
         except RuntimeError:
             self.display('Fitting spectrum failed!')
             return
@@ -187,17 +218,44 @@ class Application(tk.Frame):
             index, shift = 0, 0
         return files[(len(files) + index + shift) % len(files)]
 
-    def set_methods(self):
-        self.calc.strategy.set(
+    def set_all_methods(self):
+        self.calc.engine.set_strategy(
             reading=self.reading_strategy.get(),
             backfitting=self.backfitting_strategy.get(),
             peakfitting=self.peakfitting_strategy.get(),
             correcting=self.correcting_strategy.get(),
             translating=self.translating_strategy.get(),
             drawing=self.drawing_strategy.get())
+        self._reevaluate()
+
+    def set_reading_method(self):
+        self.calc.engine.set_strategy(reading=self.reading_strategy.get())
+        self._reevaluate()
+
+    def set_backfitting_method(self):
+        self.calc.engine.set_strategy(backfitting=self.backfitting_strategy.get())
+        self._reevaluate()
+
+    def set_peakfitting_method(self):
+        self.calc.engine.set_strategy(peakfitting=self.peakfitting_strategy.get())
+        self._reevaluate()
+
+    def set_correcting_method(self):
+        self.calc.engine.set_strategy(correcting=self.correcting_strategy.get())
+        self._reevaluate()
+
+    def set_translating_method(self):
+        self.calc.engine.set_strategy(translating=self.translating_strategy.get())
+        self._reevaluate()
+
+    def set_drawing_method(self):
+        self.calc.engine.set_strategy(drawing=self.drawing_strategy.get())
+        self._reevaluate()
+
+    def _reevaluate(self):
         self.calc.calculate_offset_from_reference()
         try:
-            self.calc.read_and_fit()
+            self.calc.read()
             self.r1.set(value=self.calc.r1)
         except OSError:
             pass

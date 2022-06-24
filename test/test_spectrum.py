@@ -22,6 +22,16 @@ class TestCurve(unittest.TestCase):
         self.assertAlmostEqual(Curve(lambda x, a: a * x, (1.2,))(pi, 3.4),
                                10.6814150222)
 
+    def test_call_with_no_arguments(self):
+        curve = Curve(lambda x, a: a * x, (1.2,))
+        with self.assertRaises(IndexError):
+            curve()
+
+    def test_call_with_too_many_arguments(self):
+        curve = Curve(lambda x, a: a * x, (1.2,))
+        with self.assertRaises(IndexError):
+            curve(pi, pi, pi)
+
 
 class TestSpectrum(unittest.TestCase):
     x = [1.0, 2.0, 3.0]
@@ -67,8 +77,12 @@ class TestSpectrum(unittest.TestCase):
             sum(Spectrum(self.x, self.y, curve=Curve(lambda x: x)).si), 3.0)
 
     def test_si_huber(self):
-        self.assertAlmostEqual(5.4768,
+        self.assertAlmostEqual(1.132992,
             sum(Spectrum(self.x, self.y, sigma_type='huber').si))
+
+    def test_si_unknown(self):
+        with self.assertRaises(ValueError):
+            _ = Spectrum(self.x, self.y, sigma_type='nonexistent sigma type').si
 
     def test_mse(self):
         self.assertAlmostEqual(

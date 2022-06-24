@@ -18,5 +18,3 @@ def pseudovoigt(a, mu, w, et):
     ga = w / 2
     return lambda x: et * gaussian(a, mu, si)(x) + \
                      (1 - et) * lorentzian(a, mu, ga)(x)
-
-

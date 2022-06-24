@@ -1,11 +1,26 @@
+import abc
 import copy
-from abc import abstractmethod
+from collections import OrderedDict
 from scipy.optimize import curve_fit
-from ..utility.functions import polynomial
-from ..spectrum import Curve
+from pruby.strategies import BaseStrategy, BaseStrategies
+from pruby.utility import polynomial
+from pruby.spectrum import Curve
 
 
-class TemplateBackfittingStrategy:
+class BackfittingStrategy(BaseStrategy, abc.ABC):
+    @abc.abstractmethod
+    def backfit(self, calc):
+        raise NotImplementedError
+
+
+class BackfittingStrategies(BaseStrategies):
+    registry = OrderedDict()
+    strategy_type = BackfittingStrategy
+
+
+class BaseBackfittingStrategy(BackfittingStrategy, abc.ABC):
+    # For details, see https://doi.org/10.1016/j.chemolab.2004.10.003
+
     @staticmethod
     def _approximate_linearly(spectrum):
         def linear_function(x, _a0, _a1):
@@ -14,7 +29,7 @@ class TemplateBackfittingStrategy:
         a0 = spectrum.y[0] - a1 * spectrum.x[0]
         spectrum.curve = Curve(func=linear_function, args=(a0, a1))
 
-    @abstractmethod
+    @abc.abstractmethod
     def _prepare_backfit(self, calc):
         pass
 
@@ -35,7 +50,8 @@ class TemplateBackfittingStrategy:
         calc.peak_spectrum.y = calc.raw_spectrum.y - calc.back_spectrum.y
 
 
-class HuberBackfittingStrategy(TemplateBackfittingStrategy):
+@BackfittingStrategies.register(default=True)
+class HuberBackfittingStrategy(BaseBackfittingStrategy):
     name = 'Linear Huber'
 
     def _prepare_backfit(self, calc):
@@ -45,7 +61,8 @@ class HuberBackfittingStrategy(TemplateBackfittingStrategy):
         calc.back_spectrum.sigma_type = 'huber'
 
 
-class SateliteBackfittingStrategy(TemplateBackfittingStrategy):
+@BackfittingStrategies.register()
+class SateliteBackfittingStrategy(BaseBackfittingStrategy):
     name = 'Linear Satelite'
 
     def _prepare_backfit(self, calc):

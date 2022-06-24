@@ -1,6 +1,7 @@
 import tkinter as tk
 import uncertainties as uc
 
+
 PADX = 1
 PADY = 0
 WIDTH = 24
@@ -31,7 +32,7 @@ class UfloatEntry(tk.Frame):
     def __init__(self, parent, label, entry, unit, cmd, offset=0.0):
         tk.Frame.__init__(self, parent)
         self.parent = parent
-        self.offset = offset  # used to express temperature in celsius
+        self.offset = offset  # to convert celsius into kelvin
         self.label = tk.Label(self, text=label)
         self.label.config(width=int(0.15*WIDTH), justify=tk.CENTER)
         self.label.grid(row=1, column=0, padx=PADX, pady=PADY)

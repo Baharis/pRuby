@@ -1,31 +1,40 @@
-from abc import abstractmethod
+import abc
 import numpy as np
-from ..spectrum import Spectrum
+from collections import OrderedDict
+from pruby.strategies.base import BaseStrategy, BaseStrategies
+from pruby.spectrum import Spectrum
 
 
-class ReadingStrategy:
+class ReadingStrategy(BaseStrategy, abc.ABC):
     @staticmethod
-    @abstractmethod
+    @abc.abstractmethod
     def read(calc):
-        pass
+        raise NotImplementedError
 
 
+class ReadingStrategies(BaseStrategies):
+    registry = OrderedDict()
+    strategy_type = ReadingStrategy
+
+
+@ReadingStrategies.register()
 class RawTxtReadingStrategy(ReadingStrategy):
     name = 'Raw txt'
 
     @staticmethod
     def read(calc):
-        data = np.loadtxt(calc.filename, dtype=(float, float))
+        data = np.loadtxt(calc.dat_path, dtype=(float, float))
         x_list, y_list = data[:, 0], data[:, 1]
         calc.raw_spectrum = Spectrum(x_list, y_list).within(calc.limits)
 
 
+@ReadingStrategies.register(default=True)
 class MetaTxtReadingStrategy(ReadingStrategy):
     name = 'Metadata txt'
 
     @staticmethod
     def read(calc):
-        with open(calc.filename, "r") as file:
+        with open(calc.dat_path, "r") as file:
             x_list, y_list = [], []
             for line in file.readlines():
                 try:

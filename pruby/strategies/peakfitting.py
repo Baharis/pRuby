@@ -1,19 +1,32 @@
+import abc
+from collections import OrderedDict
 import numpy as np
-from abc import abstractmethod
 from scipy.optimize import curve_fit as scipy_fit
 from scipy.signal import find_peaks_cwt
 from uncertainties import ufloat
-from ..utility import gaussian, pseudovoigt
-from ..spectrum import Curve
-from ..constants import R1_0, R2_0
+from pruby.strategies.base import BaseStrategy, BaseStrategies
+from pruby.utility import gaussian, pseudovoigt
+from pruby.spectrum import Curve
+from pruby.constants import R1_0, R2_0
 
 
-class TemplatePeakfittingStrategy:
-    @abstractmethod
+class PeakfittingStrategy(BaseStrategy, abc.ABC):
+    @abc.abstractmethod
+    def peakfit(self, calc):
+        raise NotImplementedError
+
+
+class PeakfittingStrategies(BaseStrategies):
+    registry = OrderedDict()
+    strategy_type = PeakfittingStrategy
+
+
+class BasePeakfittingStrategy(PeakfittingStrategy):
+    @abc.abstractmethod
     def _prepare_peakfit(self, calc):
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def _assign_peaks(self, calc):
         pass
 
@@ -64,7 +77,8 @@ class TemplatePeakfittingStrategy:
         return ufloat(curve.args[index], curve.uncs[index])
 
 
-class GaussianPeakfittingStrategy(TemplatePeakfittingStrategy):
+@PeakfittingStrategies.register(default=True)
+class GaussianPeakfittingStrategy(BasePeakfittingStrategy):
     name = 'Gaussian'
 
     def _prepare_peakfit(self, calc):
@@ -84,7 +98,8 @@ class GaussianPeakfittingStrategy(TemplatePeakfittingStrategy):
         calc.r2 = self.ufloat_from_curve_args(curve, index=4)
 
 
-class PseudovoigtPeakfittingStrategy(TemplatePeakfittingStrategy):
+@PeakfittingStrategies.register()
+class PseudovoigtPeakfittingStrategy(BasePeakfittingStrategy):
     name = 'Pseudovoigt'
 
     def _prepare_peakfit(self, calc):
@@ -108,7 +123,8 @@ class PseudovoigtPeakfittingStrategy(TemplatePeakfittingStrategy):
         calc.r2 = self.ufloat_from_curve_args(curve, index=5)
 
 
-class CamelPeakfittingStrategy(TemplatePeakfittingStrategy):
+@PeakfittingStrategies.register()
+class CamelPeakfittingStrategy(BasePeakfittingStrategy):
     name = 'Camel'
 
     def _prepare_peakfit(self, calc):
