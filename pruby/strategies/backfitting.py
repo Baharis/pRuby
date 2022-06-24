@@ -1,10 +1,10 @@
 import abc
 import copy
 from collections import OrderedDict
-from .base import BaseStrategy, BaseStrategies
 from scipy.optimize import curve_fit
-from ..utility.functions import polynomial
-from ..spectrum import Curve
+from pruby.strategies import BaseStrategy, BaseStrategies
+from pruby.utility import polynomial
+from pruby.spectrum import Curve
 
 
 class BackfittingStrategy(BaseStrategy, abc.ABC):

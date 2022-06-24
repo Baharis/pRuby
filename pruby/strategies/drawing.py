@@ -1,8 +1,8 @@
 import abc
 from collections import OrderedDict
-from .base import BaseStrategy, BaseStrategies
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from pruby.strategies import BaseStrategy, BaseStrategies
 from pruby.utility import cycle
 
 from typing import TYPE_CHECKING

@@ -1,8 +1,8 @@
 import abc
 import numpy as np
 from collections import OrderedDict
-from .base import BaseStrategy, BaseStrategies
-from ..spectrum import Spectrum
+from pruby.strategies.base import BaseStrategy, BaseStrategies
+from pruby.spectrum import Spectrum
 
 
 class ReadingStrategy(BaseStrategy, abc.ABC):

@@ -1,4 +1,4 @@
-from .strategies import \
+from pruby.strategies import \
     ReadingStrategies, \
     BackfittingStrategies, \
     PeakfittingStrategies, \

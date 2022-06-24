@@ -4,10 +4,10 @@ import numpy as np
 from scipy.optimize import curve_fit as scipy_fit
 from scipy.signal import find_peaks_cwt
 from uncertainties import ufloat
-from .base import BaseStrategy, BaseStrategies
-from ..utility import gaussian, pseudovoigt
-from ..spectrum import Curve
-from ..constants import R1_0, R2_0
+from pruby.strategies.base import BaseStrategy, BaseStrategies
+from pruby.utility import gaussian, pseudovoigt
+from pruby.spectrum import Curve
+from pruby.constants import R1_0, R2_0
 
 
 class PeakfittingStrategy(BaseStrategy, abc.ABC):

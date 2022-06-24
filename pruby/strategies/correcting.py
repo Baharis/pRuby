@@ -1,8 +1,8 @@
 import abc
 from collections import OrderedDict
-from .base import BaseStrategy, BaseStrategies
-from ..utility.functions import polynomial
-from ..constants import T_0, UZERO
+from pruby.strategies.base import BaseStrategy, BaseStrategies
+from pruby.utility import polynomial
+from pruby.constants import T_0, UZERO
 
 
 def to_wavelength(wavenumber):

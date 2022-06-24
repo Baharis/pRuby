@@ -1,8 +1,8 @@
 import abc
 from collections import OrderedDict
-from .base import BaseStrategy, BaseStrategies
-from uncertainties import ufloat, correlation_matrix
-from ..constants import R1_0, R2_0, T_0, UZERO, P_0
+from pruby.strategies.base import BaseStrategy, BaseStrategies
+from uncertainties import ufloat
+from pruby.constants import R1_0
 
 
 def mao_function(r1, a, b):
