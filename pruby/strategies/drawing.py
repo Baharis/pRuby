@@ -10,6 +10,9 @@ if TYPE_CHECKING:
     from pruby import PressureCalculator
 
 
+mpl.use('Agg')
+
+
 class DrawingStrategy(BaseStrategy, abc.ABC):
     calc: 'PressureCalculator'
 
@@ -26,6 +29,7 @@ class DrawingStrategies(BaseStrategies):
 class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
     def __init__(self):
         plt.close()
+        mpl.use('Agg')
         self.calc: 'PressureCalculator'
         self.fig: plt.Figure = plt.figure(figsize=(8, 6), dpi=100)
         self.ax: plt.Axes = self.fig.add_subplot()
@@ -42,8 +46,6 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
         self.calc = calc
         if self.interactive:
             mpl.use('TkAgg')
-        else:
-            mpl.use('Agg')
         if not self.calc.fig.axes:
             self.draw_new_figure()
         elif not plt.fignum_exists(self.calc.fig.number):
