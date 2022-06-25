@@ -24,9 +24,6 @@ class DrawingStrategies(BaseStrategies):
 
 
 class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
-    color_cycle = cycle(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-                         '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
-
     def __init__(self):
         if self.interactive:
             mpl.use('TkAgg')
@@ -37,6 +34,9 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
         self.fig: plt.Figure = plt.figure(figsize=(8, 6), dpi=100)
         self.ax: plt.Axes = self.fig.add_subplot()
         self.color = '#000000'
+        self.color_cycle = cycle(
+            ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+             '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
 
     @property
     def interactive(self):
