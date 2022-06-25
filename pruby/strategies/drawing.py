@@ -28,7 +28,10 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
                          '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
 
     def __init__(self):
-        mpl.use('TkAgg')
+        if self.interactive:
+            mpl.use('TkAgg')
+        else:
+            mpl.use('Agg')
         plt.close()
         self.calc: 'PressureCalculator'
         self.fig: plt.Figure = plt.figure(figsize=(8, 6), dpi=100)
