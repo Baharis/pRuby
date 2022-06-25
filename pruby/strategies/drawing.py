@@ -10,6 +10,9 @@ if TYPE_CHECKING:
     from pruby import PressureCalculator
 
 
+mpl.use('Agg')
+
+
 class DrawingStrategy(BaseStrategy, abc.ABC):
     calc: 'PressureCalculator'
 
@@ -24,16 +27,16 @@ class DrawingStrategies(BaseStrategies):
 
 
 class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
-    color_cycle = cycle(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-                         '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
-
     def __init__(self):
-        mpl.use('TkAgg')
         plt.close()
+        mpl.use('Agg')
         self.calc: 'PressureCalculator'
         self.fig: plt.Figure = plt.figure(figsize=(8, 6), dpi=100)
         self.ax: plt.Axes = self.fig.add_subplot()
         self.color = '#000000'
+        self.color_cycle = cycle(
+            ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+             '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
 
     @property
     def interactive(self):
@@ -41,6 +44,8 @@ class BaseDrawingStrategy(DrawingStrategy, abc.ABC):
 
     def draw_initialize(self, calc):
         self.calc = calc
+        if self.interactive:
+            mpl.use('TkAgg')
         if not self.calc.fig.axes:
             self.draw_new_figure()
         elif not plt.fignum_exists(self.calc.fig.number):
