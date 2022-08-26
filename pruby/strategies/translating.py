@@ -98,3 +98,6 @@ class WeiTranslatingStrategy(TranslatingStrategy):
         b = b300 + b1 * dt + b2 * dt ** 2
         la_t = la300 + la1 * dt
         calc.p = (a / b) * (pow(r1 / la_t, b) - 1.0)
+
+# TODO: use years when generating strategy names
+# TODO: add doi links or numbers as variables
