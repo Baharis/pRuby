@@ -24,7 +24,8 @@ class TranslatingStrategies(BaseStrategies):
 @TranslatingStrategies.register(default=True)
 class JacobsenTranslatingStrategy(TranslatingStrategy):
     """Based on doi:10.2138/am.2008.2988"""
-    name = 'Jacobsen'  # (2008)
+    name = 'Jacobsen'
+    year = 2008
 
     def translate(self, calc):
         r1 = calc.r1 - calc.offset + calc.t_correction
@@ -35,6 +36,7 @@ class JacobsenTranslatingStrategy(TranslatingStrategy):
 class LiuTranslatingStrategy(TranslatingStrategy):
     """Based on doi:10.1088/1674-1056/22/5/056201"""
     name = 'Liu'  # (2013)
+    year = 2013
 
     def translate(self, calc):
         r1 = calc.r1 - calc.offset + calc.t_correction
@@ -44,7 +46,8 @@ class LiuTranslatingStrategy(TranslatingStrategy):
 @TranslatingStrategies.register()
 class MaoTranslatingStrategy(TranslatingStrategy):
     """Based on doi:10.1029/JB091iB05p04673"""
-    name = 'Mao'  # (1986)
+    name = 'Mao'
+    year = 1986
 
     def translate(self, calc):
         r1 = calc.r1 - calc.offset + calc.t_correction
@@ -54,7 +57,8 @@ class MaoTranslatingStrategy(TranslatingStrategy):
 @TranslatingStrategies.register()
 class PiermariniTranslatingStrategy(TranslatingStrategy):
     """Based on doi:10.1063/1.321957"""
-    name = 'Piermarini'  # (1975)
+    name = 'Piermarini'
+    year = 1975
 
     def translate(self, calc):
         r1 = calc.r1 - calc.offset + calc.t_correction
@@ -64,7 +68,8 @@ class PiermariniTranslatingStrategy(TranslatingStrategy):
 @TranslatingStrategies.register()
 class Ruby2020TranslatingStrategy(TranslatingStrategy):
     """Based on doi:10.1080/08957959.2020.1791107"""
-    name = 'Ruby2020'  # (2020)
+    name = 'Ruby2020'
+    year = 2020
 
     def translate(self, calc):
         r1 = calc.r1 - calc.offset + calc.t_correction
@@ -76,7 +81,8 @@ class Ruby2020TranslatingStrategy(TranslatingStrategy):
 @TranslatingStrategies.register()
 class WeiTranslatingStrategy(TranslatingStrategy):
     """Based on doi:10.1063/1.3624618"""
-    name = 'Wei'  # (2011)
+    name = 'Wei'
+    year = 2011
 
     def translate(self, calc):
         r1 = calc.r1 - calc.offset
