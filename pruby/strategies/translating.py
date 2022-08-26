@@ -22,6 +22,15 @@ class TranslatingStrategies(BaseStrategies):
 
 
 @TranslatingStrategies.register(default=True)
+class JacobsenTranslatingStrategy(TranslatingStrategy):
+    name = 'Jacobsen'  # (2008)
+
+    def translate(self, calc):
+        r1 = calc.r1 - calc.offset + calc.t_correction
+        calc.p = mao_function(r1, a=1904, b=ufloat(10.32, 0.07))
+
+
+@TranslatingStrategies.register(default=True)
 class LiuTranslatingStrategy(TranslatingStrategy):
     name = 'Liu'  # (2013)
 
