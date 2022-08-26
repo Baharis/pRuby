@@ -23,6 +23,7 @@ class TranslatingStrategies(BaseStrategies):
 
 @TranslatingStrategies.register(default=True)
 class JacobsenTranslatingStrategy(TranslatingStrategy):
+    """Based on doi:10.2138/am.2008.2988"""
     name = 'Jacobsen'  # (2008)
 
     def translate(self, calc):
@@ -32,6 +33,7 @@ class JacobsenTranslatingStrategy(TranslatingStrategy):
 
 @TranslatingStrategies.register(default=True)
 class LiuTranslatingStrategy(TranslatingStrategy):
+    """Based on doi:10.1088/1674-1056/22/5/056201"""
     name = 'Liu'  # (2013)
 
     def translate(self, calc):
@@ -41,6 +43,7 @@ class LiuTranslatingStrategy(TranslatingStrategy):
 
 @TranslatingStrategies.register()
 class MaoTranslatingStrategy(TranslatingStrategy):
+    """Based on doi:10.1029/JB091iB05p04673"""
     name = 'Mao'  # (1986)
 
     def translate(self, calc):
@@ -56,6 +59,18 @@ class PiermariniTranslatingStrategy(TranslatingStrategy):
     def translate(self, calc):
         r1 = calc.r1 - calc.offset + calc.t_correction
         calc.p = ufloat(2.740, 0.016) * (r1 - R1_0)
+
+
+@TranslatingStrategies.register()
+class Ruby2020TranslatingStrategy(TranslatingStrategy):
+    """Based on doi:10.1080/08957959.2020.1791107"""
+    name = 'Ruby2020'  # (2020)
+
+    def translate(self, calc):
+        r1 = calc.r1 - calc.offset + calc.t_correction
+        r1_0_ruby2020 = ufloat(694.25, 0.01)
+        r_rel = (r1 - r1_0_ruby2020) / r1_0_ruby2020
+        calc.p = ufloat(1870, 10) * r_rel * (1 + ufloat(5.63, 0.03) * r_rel)
 
 
 @TranslatingStrategies.register()
