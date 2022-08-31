@@ -102,27 +102,33 @@ of underlaying calculator and change the behaviour of program.
       which can not be determined correctly using other approaches.
   * Correcting strategies
     * **Vos R1** - correct for temperature difference accorging to the R1
-      equation put forward by Vos et al. in
-      [doi:10.1063/1.348903](http://aip.scitation.org/doi/10.1063/1.348903)
+      equation put forward in 1991 by Vos et al.
+      See [doi:10.1063/1.348903](http://aip.scitation.org/doi/10.1063/1.348903)
       (default).
     * **Ragan R1** - correct for temperature difference accorging to equation
-      put forward by Ragan et al. in 
-      [doi:10.1063/1.351951](http://aip.scitation.org/doi/10.1063/1.351951).
+      put forward in 1992 by Ragan et al.
+      See [doi:10.1063/1.351951](http://aip.scitation.org/doi/10.1063/1.351951).
     * **No t correction** - don't correct for temperature difference.
   * Translating strategies
+    * **Jacobsen** - translate R1 position to pressure according to equation
+      for helium pressure media put forward in 2008 by Jacobsen et al. 
+      See [doi:10.2138/am.2008.2988](https://doi.org/10.2138/am.2008.2988).
     * **Liu** - translate R1 position to pressure
-      according to equation put forward by Liu et al. in 
-      [doi:10.1088/1674-1056/22/5/056201](http://iopscience.iop.org/article/10.1088/1674-1056/22/5/056201/meta).
-      (default).
+      according to equation put forward in 2013 by Liu et al.
+      See [doi:10.1088/1674-1056/22/5/056201](http://iopscience.iop.org/article/10.1088/1674-1056/22/5/056201/meta).
     * **Mao** - translate R1 position to pressure
-      according to equation put forward by Mao et al. in
-      [doi:10.1029/JB091iB05p04673](http://onlinelibrary.wiley.com/doi/10.1029/JB091iB05p04673/abstract).
+      according to equation put forward in 1986 by Mao et al.
+      See [doi:10.1029/JB091iB05p04673](http://onlinelibrary.wiley.com/doi/10.1029/JB091iB05p04673/abstract).
     * **Piermarini** - translate R1 position to pressure
-      according to equation put forward by Piermarini et al. in 
-      [10.1063/1.321957](http://aip.scitation.org/doi/10.1063/1.321957).
+      according to equation put forward in 1975 by Piermarini et al. 
+      See [doi:10.1063/1.321957](http://aip.scitation.org/doi/10.1063/1.321957).
+    * **Ruby2020** - translate R1 position to pressure using equation put
+      forward in 2020 by the International Practical Pressure Scale Task Group. 
+      See [doi:10.1080/08957959.2020.1791107](https://doi.org/10.1080/08957959.2020.1791107)
+      (default).
     * **Wei** - translate R1 position to pressure 
-      according to equation put forward by Wei et al. in 
-    [doi:10.1063/1.3624618](http://aip.scitation.org/doi/10.1063/1.3624618). 
+      according to equation put forward in 2011 by Wei et al.
+      See [doi:10.1063/1.3624618](http://aip.scitation.org/doi/10.1063/1.3624618). 
   * Drawing strategies
     * **Simple** - draws spectrum with as little details as possible
       to increase clarity, e.g. when overlaying multiple spectra.
@@ -130,15 +136,15 @@ of underlaying calculator and change the behaviour of program.
       plot background profile, fitting range, and determined R2 value as well.
 * **?** - Show basic information about the program
 
-Multiple behaviour options are available and can be selected from the package
+These and some other behaviour options are available and can be selected from the package
 level as well, by modyfying the `engine` attribute of a `PressureCalculator`.
 For example, the temperature correction can be turned off therein using:
 
     calc.engine.set_strategy(correcting='None')
 
-Each of the six strategies (reading, backfitting, peakfitting, correcting,
-translating, and drawing) can be changed independently or together by providing
-its name, as listed in the table above.
+Each of the six strategies (`reading`, `backfitting`, `peakfitting`,
+`correcting`, `translating`, and `drawing`) can be changed independently
+or together by providing its name, as listed in the table above.
 
 ## Author
 

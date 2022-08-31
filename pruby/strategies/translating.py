@@ -35,7 +35,7 @@ class JacobsenTranslatingStrategy(TranslatingStrategy):
 @TranslatingStrategies.register()
 class LiuTranslatingStrategy(TranslatingStrategy):
     """Based on doi:10.1088/1674-1056/22/5/056201"""
-    name = 'Liu'  # (2013)
+    name = 'Liu'
     year = 2013
     reference = r'https://doi.org/10.1088/1674-1056/22/5/056201'
 
