@@ -65,8 +65,8 @@ class Application(tk.Frame):
         def make_options_submenu(strategy_list, str_var, label, command):
             self.menu_options.add_command(label=label, state='disabled')
             for strategy in strategy_list:
-                self.menu_options.add_radiobutton(label=strategy.name,
-                value=strategy.name, variable=str_var, command=command)
+                self.menu_options.add_radiobutton(label=str(strategy()),
+                value=str(strategy()), variable=str_var, command=command)
             self.menu_options.add_separator()  # separators if necessary
 
         make_options_submenu(
