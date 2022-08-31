@@ -13,7 +13,6 @@ def open_file_dialogue():
 def show_about():
     message = 'pRuby - pressure estimation based on ruby fluorescence ' \
               'spectrum by Daniel Tcho\u0144\n\n' \
-              'For details and help, visit pRuby page ' \
-              '(https://github.com/Baharis/pRuby)' \
-              'or contact dtchon@chem.uw.edu.pl.'
+              'For details and help, visit https://github.com/Baharis/pRuby ' \
+              'or contact me on https://dtools.pl'
     mb.showinfo(title='About pRuby', message=message)
