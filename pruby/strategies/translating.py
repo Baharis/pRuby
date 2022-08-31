@@ -21,7 +21,7 @@ class TranslatingStrategies(BaseStrategies):
     strategy_type = TranslatingStrategy
 
 
-@TranslatingStrategies.register(default=True)
+@TranslatingStrategies.register()
 class JacobsenTranslatingStrategy(TranslatingStrategy):
     name = 'Jacobsen'
     year = 2008
@@ -32,7 +32,7 @@ class JacobsenTranslatingStrategy(TranslatingStrategy):
         calc.p = mao_function(r1, a=1904, b=ufloat(10.32, 0.07))
 
 
-@TranslatingStrategies.register(default=True)
+@TranslatingStrategies.register()
 class LiuTranslatingStrategy(TranslatingStrategy):
     """Based on doi:10.1088/1674-1056/22/5/056201"""
     name = 'Liu'  # (2013)
@@ -66,7 +66,7 @@ class PiermariniTranslatingStrategy(TranslatingStrategy):
         calc.p = ufloat(2.740, 0.016) * (r1 - R1_0)
 
 
-@TranslatingStrategies.register()
+@TranslatingStrategies.register(default=True)
 class Ruby2020TranslatingStrategy(TranslatingStrategy):
     name = 'Ruby2020'
     year = 2020
