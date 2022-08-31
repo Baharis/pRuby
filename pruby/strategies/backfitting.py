@@ -19,7 +19,7 @@ class BackfittingStrategies(BaseStrategies):
 
 
 class BaseBackfittingStrategy(BackfittingStrategy, abc.ABC):
-    # For details, see https://doi.org/10.1016/j.chemolab.2004.10.003
+    reference = r'https://doi.org/10.1016/j.chemolab.2004.10.003'
 
     @staticmethod
     def _approximate_linearly(spectrum):

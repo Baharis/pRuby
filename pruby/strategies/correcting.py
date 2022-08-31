@@ -39,8 +39,9 @@ class CorrectingStrategies(BaseStrategies):
 
 @CorrectingStrategies.register(default=True)
 class VosR1CorrectingStrategy(CorrectingStrategy):
-    """Based on doi:10.1063/1.348903"""
     name = 'Vos R1'  # (1991)
+    year = 1991
+    reference = r'https://doi.org/10.1063/1.348903'
 
     def correct(self, calc):
         calc.t_correction = -vos_r1_shift(calc.t)
@@ -48,15 +49,18 @@ class VosR1CorrectingStrategy(CorrectingStrategy):
 
 class VosR2CorrectingStrategy(CorrectingStrategy):
     """Based on doi:10.1063/1.348903"""
-    name = 'Vos R2'  # (1991)
+    name = 'Vos R2'
+    year = 1991
+    reference = r'https://doi.org/10.1063/1.348903'
 
     def correct(self, calc):
         calc.t_correction = -vos_r2_shift(calc.t)
 
 
 class VosR12CorrectingStrategy(CorrectingStrategy):
-    """Based on doi:10.1063/1.348903"""
-    name = 'Vos average'  # (1991)
+    name = 'Vos average'
+    year = 1991
+    reference = r'https://doi.org/10.1063/1.348903'
 
     def correct(self, calc):
         calc.t_correction = \
@@ -65,24 +69,27 @@ class VosR12CorrectingStrategy(CorrectingStrategy):
 
 @CorrectingStrategies.register()
 class RaganR1CorrectingStrategy(CorrectingStrategy):
-    """Based on doi:10.1063/1.351951"""
-    name = 'Ragan R1'  # (1992)
+    name = 'Ragan R1'
+    year = 1992
+    reference = r'https://doi.org/10.1063/1.351951'
 
     def correct(self, calc):
         calc.t_correction = ragan_r1_position(T_0) - ragan_r1_position(calc.t)
 
 
 class RaganR2CorrectingStrategy(CorrectingStrategy):
-    """Based on doi:10.1063/1.351951"""
     name = 'Ragan R2'  # (1992)
+    year = 1992
+    reference = r'https://doi.org/10.1063/1.351951'
 
     def correct(self, calc):
         calc.t_correction = ragan_r2_position(T_0) - ragan_r2_position(calc.t)
 
 
 class RaganR12CorrectingStrategy(CorrectingStrategy):
-    """Based on doi:10.1063/1.351951"""
     name = 'Ragan average'  # (1992)
+    year = 1992
+    reference = r'https://doi.org/10.1063/1.351951'
 
     def correct(self, calc):
         calc.t_correction = (ragan_r1_position(T_0)-ragan_r1_position(calc.t) +

@@ -26,7 +26,7 @@ with io.open(os.path.join(HERE, "README.md"), encoding="utf-8") as f:
 
 setup(
     name='pruby',
-    version='0.1.1',
+    version='0.1.2',
     author='Daniel Tchoń',
     author_email='dtchon@chem.uw.edu.pl',
     packages=find_packages(exclude=('legacy', 'cli')),

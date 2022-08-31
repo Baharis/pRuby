@@ -21,9 +21,23 @@ class TranslatingStrategies(BaseStrategies):
     strategy_type = TranslatingStrategy
 
 
-@TranslatingStrategies.register(default=True)
+@TranslatingStrategies.register()
+class JacobsenTranslatingStrategy(TranslatingStrategy):
+    name = 'Jacobsen'
+    year = 2008
+    reference = r'https://doi.org/10.2138/am.2008.2988'
+
+    def translate(self, calc):
+        r1 = calc.r1 - calc.offset + calc.t_correction
+        calc.p = mao_function(r1, a=1904, b=ufloat(10.32, 0.07))
+
+
+@TranslatingStrategies.register()
 class LiuTranslatingStrategy(TranslatingStrategy):
-    name = 'Liu'  # (2013)
+    """Based on doi:10.1088/1674-1056/22/5/056201"""
+    name = 'Liu'
+    year = 2013
+    reference = r'https://doi.org/10.1088/1674-1056/22/5/056201'
 
     def translate(self, calc):
         r1 = calc.r1 - calc.offset + calc.t_correction
@@ -32,7 +46,9 @@ class LiuTranslatingStrategy(TranslatingStrategy):
 
 @TranslatingStrategies.register()
 class MaoTranslatingStrategy(TranslatingStrategy):
-    name = 'Mao'  # (1986)
+    name = 'Mao'
+    year = 1986
+    reference = r'https://doi.org/10.1029/JB091iB05p04673'
 
     def translate(self, calc):
         r1 = calc.r1 - calc.offset + calc.t_correction
@@ -41,18 +57,33 @@ class MaoTranslatingStrategy(TranslatingStrategy):
 
 @TranslatingStrategies.register()
 class PiermariniTranslatingStrategy(TranslatingStrategy):
-    """Based on doi:10.1063/1.321957"""
-    name = 'Piermarini'  # (1975)
+    name = 'Piermarini'
+    year = 1975
+    reference = r'https://doi.org/10.1063/1.321957'
 
     def translate(self, calc):
         r1 = calc.r1 - calc.offset + calc.t_correction
         calc.p = ufloat(2.740, 0.016) * (r1 - R1_0)
 
 
+@TranslatingStrategies.register(default=True)
+class Ruby2020TranslatingStrategy(TranslatingStrategy):
+    name = 'Ruby2020'
+    year = 2020
+    reference = r'https://doi.org/10.1080/08957959.2020.1791107'
+
+    def translate(self, calc):
+        r1 = calc.r1 - calc.offset + calc.t_correction
+        r1_0_ruby2020 = ufloat(694.25, 0.01)
+        r_rel = (r1 - r1_0_ruby2020) / r1_0_ruby2020
+        calc.p = ufloat(1870, 10) * r_rel * (1 + ufloat(5.63, 0.03) * r_rel)
+
+
 @TranslatingStrategies.register()
 class WeiTranslatingStrategy(TranslatingStrategy):
-    """Based on doi:10.1063/1.3624618"""
-    name = 'Wei'  # (2011)
+    name = 'Wei'
+    year = 2011
+    reference = r'https://doi.org/10.1063/1.3624618'
 
     def translate(self, calc):
         r1 = calc.r1 - calc.offset
@@ -68,3 +99,6 @@ class WeiTranslatingStrategy(TranslatingStrategy):
         b = b300 + b1 * dt + b2 * dt ** 2
         la_t = la300 + la1 * dt
         calc.p = (a / b) * (pow(r1 / la_t, b) - 1.0)
+
+# TODO: use years when generating strategy names
+# TODO: add doi links or numbers as variables
