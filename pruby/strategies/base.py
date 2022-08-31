@@ -5,10 +5,22 @@ from typing import Callable
 
 class BaseStrategy(abc.ABC):
     """Base class for all types of all individual strategies"""
+
+    def __str__(self):
+        return f'{self.name} ({self.year})' if self.year else self.name
+
     @property
     @abc.abstractmethod
     def name(self) -> str:
         raise NotImplementedError
+
+    @property
+    def year(self) -> int:
+        return 0
+
+    @property
+    def reference(self) -> str:
+        return ''
 
 
 class BaseStrategies(UserDict, abc.ABC):
