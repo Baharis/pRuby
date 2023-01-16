@@ -144,3 +144,11 @@ class CamelPeakfittingStrategy(BasePeakfittingStrategy):
         curve = calc.peak_spectrum.curve
         calc.r1 = self.ufloat_from_curve_args(curve, index=1)
         calc.r2 = self.ufloat_from_curve_args(curve, index=4)
+
+
+@PeakfittingStrategies.register()
+class NullPeakfittingStrategy(PeakfittingStrategy):
+    name = 'No peak fitting'
+
+    def peakfit(self, calc):
+        curve = Curve()
