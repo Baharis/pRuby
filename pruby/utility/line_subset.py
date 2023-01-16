@@ -17,8 +17,8 @@ class LineSubset:
     # SEGMENT METHODS
     class LineSegment:
         def __init__(self, left=None, right=None):
-            if left >= right:
-                raise ValueError('Left ({}) >= Right ({})'.format(left, right))
+            if left > right:
+                raise ValueError('Left ({}) > Right ({})'.format(left, right))
             self.left = left
             self.right = right
 
