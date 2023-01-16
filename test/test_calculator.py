@@ -129,7 +129,7 @@ class TestCalculator(unittest.TestCase):
 
     def test_reading_and_fitting_meta_file(self):
         calc = PressureCalculator()
-        calc.engine.set_strategy(reading='Metadata txt')
+        calc.engine.set_strategy(reading='Metadata spectrum txt')
         calc.read(test_data2_path)
         self.assertGreater(calc.r1.n, 694.0)
 

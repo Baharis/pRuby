@@ -1,6 +1,7 @@
 import abc
 import numpy as np
 from collections import OrderedDict
+from uncertainties import ufloat_fromstr
 from pruby.strategies.base import BaseStrategy, BaseStrategies
 from pruby.spectrum import Spectrum
 
@@ -56,10 +57,11 @@ class SingleLineReadingStrategy(ReadingStrategy):
     @staticmethod
     def read(calc):
         with open(calc.dat_path, 'r') as file:
-            first_line = file.readline().split(' ')
-            r1 = float(first_line[0])
+            first_line = file.readline().split()
+            r1 = ufloat_fromstr(first_line[0])
             try:
-                intensity = float(first_line[1])
+                intensity = ufloat_fromstr(first_line[1])
             except (IndexError, ValueError):
                 intensity = 1
-        calc.raw_spectrum = Spectrum([r1], [intensity])
+        calc.raw_spectrum = calc.peak_spectrum = Spectrum([r1], [intensity])
+        calc.r1 = r1
