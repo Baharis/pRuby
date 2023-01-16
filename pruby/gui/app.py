@@ -161,7 +161,7 @@ class Application(tk.Frame):
 
     def change_file(self, filename):
         self.file.set(filename)
-        if filename is '':
+        if filename == '':
             return
         try:
             self.calc.read(filename)

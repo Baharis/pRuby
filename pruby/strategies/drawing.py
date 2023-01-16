@@ -2,6 +2,8 @@ import abc
 from collections import OrderedDict
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
+
 from pruby.strategies import BaseStrategy, BaseStrategies
 from pruby.utility import cycle
 
@@ -121,4 +123,24 @@ class ComplexDrawingStrategy(BaseDrawingStrategy):
         self.draw_finalize()
 
 
+@DrawingStrategies.register()
+class SingleLineDrawingStrategy(BaseDrawingStrategy):
+    name = 'Single line'
 
+    def draw_finalize(self):
+        self.ax.annotate('nm', xy=(1, 0), ha='left', va='top',
+                         xytext=(10, - 3 - mpl.rcParams['xtick.major.pad']),
+                         xycoords='axes fraction', textcoords='offset points')
+        self.ax.legend()
+        self.calc.fig = self.fig
+        if self.interactive:
+            self.fig.show()
+        else:
+            self.fig.savefig(self.calc.output_path)
+
+    def draw(self, calc):
+        self.draw_initialize(calc)
+        self.draw_grid_and_tics()
+        self.draw_spectrum([np.NaN], [np.NaN])
+        self.draw_vline(calc.r1.n)
+        self.draw_finalize()

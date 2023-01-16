@@ -70,3 +70,12 @@ class SateliteBackfittingStrategy(BaseBackfittingStrategy):
         self._approximate_linearly(calc.back_spectrum)
         calc.back_spectrum.focus_on_edge(width=1.0)
         calc.back_spectrum.sigma_type = 'equal'
+
+
+@BackfittingStrategies.register()
+class NullBackfittingStrategy(BackfittingStrategy):
+    name = 'No background fitting'
+
+    def backfit(self, calc):
+        calc.back_spectrum = copy.deepcopy(calc.raw_spectrum)
+        calc.back_spectrum.y = calc.back_spectrum.y * 0.0

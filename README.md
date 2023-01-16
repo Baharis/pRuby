@@ -75,20 +75,22 @@ pRuby GUI provides a simple, minimalistic GUI with the following functionality:
       position. Multiple plots will be drawn on the same canvas if it stays open. 
     * **To reference** - Export current R1, t and p1 values as a new reference.
     * **From reference** - Import R1, r and p1 data from previously saved reference.
-    * **Drow on import** - Toggle this option on in order to automatically draw
+    * **Draw on import** - Toggle this option on in order to automatically draw
       every imported data on the active canvas.
 * **Methods** - switch between the strategies to affect the engine
 of underlaying calculator and change the behaviour of program.
   * Reading strategies
-    * **Raw txt** - when reading the spectrum, expect a raw txt file
+    * **Raw spectrum txt** - when reading the spectrum, expect a raw txt file
       with two columns containing a sequences of x and y values only.
-    * **Meta txt** - same as above, but ignore every line which
+    * **Metadata spectrum txt** - same as above, but ignore every line which
       can not be interpreted (default).
+    * **Single value txt** - expect only a single line with r1 value.
   * Backfitting strategies
     * **Linear Huber** - estimate the background using linear function fitting
       with Huber sigmas (large deviations from the line - peaks - are ignored).
     * **Linear Satelite** - estimate the background using linear function
       fitting with unit sigmas to 1 nm ranges of edge-most data only.
+    * **No background fitting** - do not fit any background - assume bg of 0.
   * Peakfitting strategies
     * **Gauss** - find the positions of R1 and R2 using two independent
       Gaussian function centered around each of them and fit to a very small
@@ -100,6 +102,8 @@ of underlaying calculator and change the behaviour of program.
       Gaussian curves to data: one for R1, one for R1, one low between them.
       Intended fot bad quaility data with heavily overlapping peaks,
       which can not be determined correctly using other approaches.
+    * **No peak fitting** - do not fit any curve to model peak in spectrum.
+      To be used with **Single value txt** and **No background fitting**. 
   * Correcting strategies
     * **Vos R1** - correct for temperature difference accorging to the R1
       equation put forward in 1991 by Vos et al.
@@ -134,6 +138,7 @@ of underlaying calculator and change the behaviour of program.
       to increase clarity, e.g. when overlaying multiple spectra.
     * **Complex** - draw the same elements as **Simple**, but additionally
       plot background profile, fitting range, and determined R2 value as well.
+    * **Single line** - minimalistic; draw only a single vertical line at R1.
 * **?** - Show basic information about the program
 
 These and some other behaviour options are available and can be selected from the package
@@ -152,6 +157,6 @@ This software is made by
 [Daniel Tchoń](https://www.researchgate.net/profile/Daniel-Tchon),
 and distributed under an MIT license. It is in development and all
 tips, suggestions, or contributions are welcome and can be sent
-[here](mailto:dtchon@chem.uw.edu.pl).
+[here](mailto:dtchon@lbl.gov).
 If you have utilised pRuby in academic work, please let me know!
 If the tools find a wider use, a dedicated paper will be published.
