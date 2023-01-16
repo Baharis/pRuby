@@ -19,7 +19,7 @@ class ReadingStrategies(BaseStrategies):
 
 @ReadingStrategies.register()
 class RawTxtReadingStrategy(ReadingStrategy):
-    name = 'Raw txt'
+    name = 'Raw spectrum txt'
 
     @staticmethod
     def read(calc):
@@ -30,11 +30,11 @@ class RawTxtReadingStrategy(ReadingStrategy):
 
 @ReadingStrategies.register(default=True)
 class MetaTxtReadingStrategy(ReadingStrategy):
-    name = 'Metadata txt'
+    name = 'Metadata spectrum txt'
 
     @staticmethod
     def read(calc):
-        with open(calc.dat_path, "r") as file:
+        with open(calc.dat_path, 'r') as file:
             x_list, y_list = [], []
             for line in file.readlines():
                 try:
@@ -47,3 +47,19 @@ class MetaTxtReadingStrategy(ReadingStrategy):
                     x_list.append(new_x)
                     y_list.append(new_y)
         calc.raw_spectrum = Spectrum(x_list, y_list).within(calc.limits)
+
+
+@ReadingStrategies.register()
+class SingleLineReadingStrategy(ReadingStrategy):
+    name = 'Single value txt'
+
+    @staticmethod
+    def read(calc):
+        with open(calc.dat_path, 'r') as file:
+            first_line = file.readline().split(' ')
+            r1 = float(first_line[0])
+            try:
+                intensity = float(first_line[1])
+            except (IndexError, ValueError):
+                intensity = 1
+        calc.raw_spectrum = Spectrum([r1], [intensity])
