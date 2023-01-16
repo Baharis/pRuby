@@ -103,7 +103,7 @@ of underlaying calculator and change the behaviour of program.
       Intended fot bad quaility data with heavily overlapping peaks,
       which can not be determined correctly using other approaches.
     * **No peak fitting** - do not fit any curve to model peak in spectrum.
-      To be used in with **Single value txt** and **No background fitting**. 
+      To be used with **Single value txt** and **No background fitting**. 
   * Correcting strategies
     * **Vos R1** - correct for temperature difference accorging to the R1
       equation put forward in 1991 by Vos et al.
@@ -157,6 +157,6 @@ This software is made by
 [Daniel Tchoń](https://www.researchgate.net/profile/Daniel-Tchon),
 and distributed under an MIT license. It is in development and all
 tips, suggestions, or contributions are welcome and can be sent
-[here](mailto:dtchon@chem.uw.edu.pl).
+[here](mailto:dtchon@lbl.gov).
 If you have utilised pRuby in academic work, please let me know!
 If the tools find a wider use, a dedicated paper will be published.
